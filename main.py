@@ -1,11 +1,19 @@
-import csv, os
-import pathlib
-from report import dump_report
+from report import dump_report, LOADS, DEVICE_SCHEME
+from utils import read_matrix, path_join_current
 
-#class Module:
-#    """Module of system, such as Prn(processor number n), Bn(bus number n), Mn(magistral?? number n), An(Adapter number n), Cn(connector?? n), Dn(sensor?? n)"""
-#    def __init__(self, name):
-#        self.name = name
+
+class Module:
+    """
+    Module of system, such as
+    Prn(processor number n),
+    Bn(bus number n), Mn(magistral?? number n),
+    An(Adapter number n),
+    Cn(connector?? n),
+    Dn(sensor?? n)
+    """
+    def __init__(self, name):
+        self.name = name
+
 
 class Processor:
     def __init__(self, name, Tn, Tmax, Replace_processors):
@@ -15,31 +23,17 @@ class Processor:
         self.Replace_processors = Replace_processors
 
 
-def evaluate_all(reject_probabilities, device_graph):
-    pass
-
-
-def read_matrix(path):
-    with open(path) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=';')
-        return [x for x in csv_reader]
-
-
 def analyze_matrix(matrix):
     length = len(matrix)
     for i in range(2, length):
         print(matrix[i])
 
 
-def main():
-    path = "loads.csv"
-    dir_path = pathlib.Path(__file__).parent.absolute()
-    loads = read_matrix(os.path.join(dir_path, path))
-    for i in loads:
-        print(i)
-        print("\n")
+def evaluate_all(loads, reject_probabilities, device_graph):
     analyze_matrix(loads)
 
+
+def main():
     reject_probabilities = {
         'Pr': 1.3E-4,
         'A': 1.2E-4,
@@ -59,9 +53,18 @@ def main():
         'C5': {'D7', 'D8'},
         'C6': {'D8'}
     }
-    dump_report(evaluate_all(reject_probabilities, device_graph),
-                "report.docx",
-                ["", ""])
+    loads = read_matrix(path_join_current('loads.csv'))
+    dump_report(
+        input={
+            LOADS: loads,
+            DEVICE_SCHEME: path_join_current('scheme.jpg')
+        },
+        output=evaluate_all(
+            loads=loads,
+            reject_probabilities=reject_probabilities,
+            device_graph=device_graph),
+        pathname=path_join_current("report.docx"),
+        author=["", ""])
 
 
 # Press the green button in the gutter to run the script.

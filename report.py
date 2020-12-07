@@ -1,6 +1,10 @@
 from docx import Document
 
 
+DEVICE_SCHEME = 'device-scheme'
+LOADS = 'loads'
+
+
 def title(doc, data):
     doc.add_paragraph("Міністерство освіти та науки, молоді та спорту України")
     doc.add_paragraph("Національний технічний університет України «КПІ»")
@@ -32,8 +36,8 @@ def add_table_from_matrix(doc, matrix):
 
 def input_task(doc, data):
     """1. Исходное задание;"""
-    doc.add_picture(data['input']['device-scheme'])
-    add_table_from_matrix(doc, data['input']['loads'])
+    doc.add_picture(data['input'][DEVICE_SCHEME])
+    add_table_from_matrix(doc, data['input'][LOADS])
     doc.add_page_break()
 
 
