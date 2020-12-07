@@ -22,11 +22,18 @@ class Processor:
         self.t_max = t_max
         self.replace_processors = replace_processors
 
+    def print(self):
+        print(self.name + ": " + self.t_n + " " + self.t_max + " ", self.replace_processors)
+
 
 def analyze_matrix(matrix):
     length = len(matrix)
+    processors = []
     for i in range(2, length):
-        print(matrix[i])
+        row = matrix[i]
+        processors.append(Processor(row[0], row[1], row[2], row[3:]))
+    for i in processors:
+        i.print()
 
 
 def evaluate_all(loads, reject_probabilities, device_graph):
