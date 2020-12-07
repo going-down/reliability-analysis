@@ -1,3 +1,4 @@
+import pandas as pd
 from report import dump_report
 
 
@@ -5,7 +6,14 @@ def evaluate_all(reject_probabilities, device_graph):
     pass
 
 
-def main():
+def main(path):
+    path = "task_table.xlsx" ##<--- SHIT FOR TESTS
+    print(path)
+    if path == "":
+        raise Exception("File path must be non-empty")
+
+
+
     reject_probabilities = {
         'Pr': 1.3E-4,
         'A': 1.2E-4,
@@ -30,5 +38,5 @@ def main():
 
 
 # Press the green button in the gutter to run the script.
-if __name__ == 'main':
-    main()
+if __name__ == '__main__':
+    main("main")

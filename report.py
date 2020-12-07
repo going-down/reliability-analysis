@@ -1,66 +1,66 @@
 from docx import Document
 
 
-def title():
+def title(doc, data):
     pass
 
 
-def input_task():
+def input_task(doc, data):
     """1. Исходное задание;"""
     pass
 
 
-def task_function_list():
+def task_function_list(doc, data):
     """2. Перечень составленных функций задач;"""
     pass
 
 
-def load_balancing():
+def load_balancing(doc, data):
     """3. Таблица перераспределения нагрузки;"""
     pass
 
 
-def reject_modules_stats():
+def reject_modules_stats(doc, data):
     """4. Статистика отказавших модулей;"""
     pass
 
 
-def alg_docs():
+def alg_docs(doc, data):
     """5. Детальное описание алгоритма статистической выборки векторов кратности 3 и 4 (1/2 страницы);"""
     pass
 
 
-def reliability_p_or_q():
+def reliability_p_or_q(doc, data):
     """6. Найденный показатель надёжности системы (P или Q);"""
     pass
 
 
-def modification_proposes():
+def modification_proposes(doc, data):
     """7. С учётом п.5 предложения по модификации системы (с обоснованием в плане стоимости, сложности и проч.);"""
     pass
 
 
-def new_system_structure():
+def new_system_structure(doc, data):
     """8. Структура модифицированной системы;"""
     pass
 
 
-def conclusions():
+def conclusions(doc, data):
     """10. Вывод о том, что «малой кровью» достигнуто существенное
     (показать на сколько) улучшение показателя надёжности."""
     pass
 
 
-def system_docs():
-    load_balancing()
-    reject_modules_stats()
-    alg_docs()
-    reliability_p_or_q()
+def system_docs(doc, data):
+    load_balancing(doc, data)
+    reject_modules_stats(doc, data)
+    alg_docs(doc, data)
+    reliability_p_or_q(doc, data)
 
 
-def new_system_docs():
+def new_system_docs(doc, data):
     """9. Пункты 2-4 и 6 для модифицированной системы;"""
-    system_docs()
+    system_docs(doc, data)
 
 
 def document_do_all(doc, data, *funcs):
