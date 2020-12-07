@@ -33,7 +33,7 @@ def evaluate_all(loads, reject_probabilities, device_graph):
     analyze_matrix(loads)
 
 
-def main():
+def main(report_path):
     reject_probabilities = {
         'Pr': 1.3E-4,
         'A': 1.2E-4,
@@ -63,10 +63,13 @@ def main():
             loads=loads,
             reject_probabilities=reject_probabilities,
             device_graph=device_graph),
-        pathname=path_join_current("report.docx"),
+        pathname=path_join_current(report_path),
         author=["", ""])
+
+
+REPORT_PATH = "report.docx"
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main()
+    main(REPORT_PATH)
