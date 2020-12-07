@@ -1,8 +1,7 @@
+from report import dump_report
+
+
 def evaluate_all(reject_probabilities, device_graph):
-    pass
-
-
-def dump_docs(values):
     pass
 
 
@@ -26,7 +25,8 @@ def main():
         'C5': {'D7', 'D8'},
         'C6': {'D8'}
     }
-    dump_docs(evaluate_all(reject_probabilities, device_graph))
+    dump_report(evaluate_all(reject_probabilities, device_graph),
+                "report.docx")
 
 
 # Press the green button in the gutter to run the script.
