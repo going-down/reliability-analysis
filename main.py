@@ -11,8 +11,7 @@ def main(path):
     print(path)
     if path == "":
         raise Exception("File path must be non-empty")
-
-
+    xl_file = pd.ExcelFile(path)
 
     reject_probabilities = {
         'Pr': 1.3E-4,
