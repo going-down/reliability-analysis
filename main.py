@@ -1,4 +1,4 @@
-import pandas as pd
+import csv
 from report import dump_report
 
 
@@ -6,13 +6,15 @@ def evaluate_all(reject_probabilities, device_graph):
     pass
 
 
-def main(path):
-    path = "task_table.xlsx" ##<--- SHIT FOR TESTS
-    print(path)
-    if path == "":
-        raise Exception("File path must be non-empty")
+def read_matrix(path):
+    with open(path) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=';')
+        return [x for x in csv_reader]
 
 
+def main():
+    path = "loads.csv"
+    loads = read_matrix(path)
 
     reject_probabilities = {
         'Pr': 1.3E-4,
@@ -40,4 +42,4 @@ def main(path):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main("main")
+    main()
