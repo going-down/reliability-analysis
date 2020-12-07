@@ -2,6 +2,18 @@ import csv, os
 import pathlib
 from report import dump_report
 
+#class Module:
+#    """Module of system, such as Prn(processor number n), Bn(bus number n), Mn(magistral?? number n), An(Adapter number n), Cn(connector?? n), Dn(sensor?? n)"""
+#    def __init__(self, name):
+#        self.name = name
+
+class Processor:
+    def __init__(self, name, Tn, Tmax, Replace_processors):
+        self.name = name
+        self.Tn = Tn
+        self.Tmax = Tmax
+        self.Replace_processors = Replace_processors
+
 
 def evaluate_all(reject_probabilities, device_graph):
     pass
@@ -13,6 +25,12 @@ def read_matrix(path):
         return [x for x in csv_reader]
 
 
+def analyze_matrix(matrix):
+    length = len(matrix)
+    for i in range(2, length):
+        print(matrix[i])
+
+
 def main():
     path = "loads.csv"
     dir_path = pathlib.Path(__file__).parent.absolute()
@@ -20,6 +38,7 @@ def main():
     for i in loads:
         print(i)
         print("\n")
+    analyze_matrix(loads)
 
     reject_probabilities = {
         'Pr': 1.3E-4,
