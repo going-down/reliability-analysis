@@ -13,7 +13,7 @@ def title(doc, data):
     doc.add_paragraph("")
     doc.add_paragraph("")
     doc.add_paragraph("")
-    doc.add_paragraph("Комплексная лабораторная работа")
+    doc.add_paragraph("Комплексна лабораторна робота")
     doc.add_paragraph("")
     doc.add_paragraph("")
     doc.add_paragraph("")
@@ -21,11 +21,20 @@ def title(doc, data):
     doc.add_paragraph("")
     doc.add_paragraph("")
     doc.add_paragraph("")
+    doc.add_page_break()
+
+
+def add_table_from_matrix(doc, matrix):
+    rows_count = len(matrix)
+    cols_count = len(matrix[0])
+    table = doc.add_table(rows=rows_count, cols=cols_count)
 
 
 def input_task(doc, data):
     """1. Исходное задание;"""
-    pass
+    doc.add_picture(data['input']['device-scheme'])
+    add_table_from_matrix(doc, data['input']['loads'])
+    doc.add_page_break()
 
 
 def task_function_list(doc, data):
@@ -86,12 +95,13 @@ def document_do_all(doc, data, *funcs):
         func(doc, data)
 
 
-def dump_report(values, pathname, author):
+def dump_report(input, output, pathname, author):
     doc = Document()
     document_do_all(doc,
                     {
                         'author': author,
-                        'data': values,
+                        'input': input,
+                        'output': output,
                     },
                     title,
                     input_task,
