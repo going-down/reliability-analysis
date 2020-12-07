@@ -33,7 +33,8 @@ def main(path):
         'C6': {'D8'}
     }
     dump_report(evaluate_all(reject_probabilities, device_graph),
-                "report.docx")
+                "report.docx",
+                ["", ""])
 
 
 # Press the green button in the gutter to run the script.

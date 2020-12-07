@@ -2,7 +2,25 @@ from docx import Document
 
 
 def title(doc, data):
-    pass
+    doc.add_paragraph("Міністерство освіти та науки, молоді та спорту України")
+    doc.add_paragraph("Національний технічний університет України «КПІ»")
+    doc.add_paragraph("Факультет прикладної математики")
+    doc.add_paragraph("Кафедра Системного програмування і спеціалізованих комп’ютерних систем")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("Комплексная лабораторная работа")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
+    doc.add_paragraph("")
 
 
 def input_task(doc, data):
@@ -12,7 +30,7 @@ def input_task(doc, data):
 
 def task_function_list(doc, data):
     """2. Перечень составленных функций задач;"""
-    pass
+    #doc.add_table([], [])
 
 
 def load_balancing(doc, data):
@@ -68,10 +86,13 @@ def document_do_all(doc, data, *funcs):
         func(doc, data)
 
 
-def dump_report(data, pathname):
+def dump_report(values, pathname, author):
     doc = Document()
     document_do_all(doc,
-                    data,
+                    {
+                        'author': author,
+                        'data': values,
+                    },
                     title,
                     input_task,
                     task_function_list,
