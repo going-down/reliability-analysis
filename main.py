@@ -16,11 +16,11 @@ class Module:
 
 
 class Processor:
-    def __init__(self, name, Tn, Tmax, Replace_processors):
+    def __init__(self, name, t_n, t_max, replace_processors):
         self.name = name
-        self.Tn = Tn
-        self.Tmax = Tmax
-        self.Replace_processors = Replace_processors
+        self.t_n = t_n
+        self.t_max = t_max
+        self.replace_processors = replace_processors
 
 
 def analyze_matrix(matrix):
