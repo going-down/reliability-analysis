@@ -1,4 +1,5 @@
 import csv
+import pathlib
 from report import dump_report
 
 
@@ -14,7 +15,11 @@ def read_matrix(path):
 
 def main():
     path = "loads.csv"
-    loads = read_matrix(path)
+    dir_path = pathlib.Path(__file__).parent.absolute()
+    loads = read_matrix(dir_path.__str__() + "\\" + path)
+    for i in loads:
+        print(i)
+        print("\n")
 
     reject_probabilities = {
         'Pr': 1.3E-4,
