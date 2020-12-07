@@ -1,4 +1,4 @@
-import csv
+import csv, os
 import pathlib
 from report import dump_report
 
@@ -16,7 +16,7 @@ def read_matrix(path):
 def main():
     path = "loads.csv"
     dir_path = pathlib.Path(__file__).parent.absolute()
-    loads = read_matrix(dir_path.__str__() + "\\" + path)
+    loads = read_matrix(os.path.join(dir_path, path))
     for i in loads:
         print(i)
         print("\n")
