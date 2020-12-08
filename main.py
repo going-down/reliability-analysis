@@ -27,18 +27,44 @@ class Processor:
         print(self.name + ": " + self.t_n + " " + self.t_max + " ", self.replace_processors)
 
 
+class Function:
+    """
+    Part of system.
+    If one of functions results as 0 system is not working.
+
+    init: expression string.
+
+    """
+    def __init__(self, name, expr):
+        self.name = name
+        self.expr = expr
+
+    def print(self):
+        print(self.name + ": " + self.expr)
+
+
 def analyze_matrix(matrix):
     length = len(matrix)
     processors = []
     for i in range(2, length):
         row = matrix[i]
-        processors.append(Processor(row[0], row[1], row[2], row[3:]))
+        processors.append(Processor(row[0], row[1], row[2], row[3:8]))
     for i in processors:
         i.print()
 
 
-def evaluate_all(loads, reject_probabilities, device_graph):
+def analyze_functions(function_string):
+    functions = []
+    for i in function_string:
+        functions.append(Function(i[:2], i[3:]))
+    return functions
+
+
+def evaluate_all(loads, function_string, reject_probabilities, device_graph):
     analyze_matrix(loads)
+    functions = analyze_functions(function_string)
+    for i in functions:
+        i.print()
 
 
 def main(report_path):
@@ -61,7 +87,8 @@ def main(report_path):
         'C5': {'D7', 'D8'},
         'C6': {'D8'}
     }
-    loads, functions = read_system_csv(path_join_current('loads.csv'))
+    loads, function_string = read_system_csv(path_join_current('loads.csv'))
+
     dump_report(
         input={
             LOADS: loads,
@@ -69,6 +96,7 @@ def main(report_path):
         },
         output=evaluate_all(
             loads=loads,
+            function_string=function_string,
             reject_probabilities=reject_probabilities,
             device_graph=device_graph),
         pathname=path_join_current(report_path),
