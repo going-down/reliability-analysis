@@ -3,10 +3,23 @@ import os
 import pathlib
 
 
-def read_matrix(path):
+def read_system_csv(path):
+    """
+    Reads task from .csv
+    .csv must contain 8x9 sized load redistribution table
+    -----------------------------------------------------
+    input:
+        path - string with path to file
+    output:
+        load redistribution table,
+        structure functions
+    """
     with open(path) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=';')
-        return [x for x in csv_reader]
+        data = []
+        for x in csv_reader:
+            data.append(x)
+        return data[:7], data[9:13]
 
 
 def path_join_current(path):

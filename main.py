@@ -1,12 +1,13 @@
 from report import dump_report, LOADS, DEVICE_SCHEME
-from utils import read_matrix, path_join_current
+from utils import read_system_csv, path_join_current
 
 
 class Module:
     """
     Module of system, such as
     Prn(processor number n),
-    Bn(bus number n), Mn(magistral?? number n),
+    Bn(bus number n),
+    Mn(magistral?? number n),
     An(Adapter number n),
     Cn(connector?? n),
     Dn(sensor?? n)
@@ -60,7 +61,7 @@ def main(report_path):
         'C5': {'D7', 'D8'},
         'C6': {'D8'}
     }
-    loads = read_matrix(path_join_current('loads.csv'))
+    loads, functions = read_system_csv(path_join_current('loads.csv'))
     dump_report(
         input={
             LOADS: loads,
