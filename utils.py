@@ -19,7 +19,7 @@ def read_system_csv(path):
         data = []
         for x in csv_reader:
             data.append(x)
-        return data[:7], data[9:13]
+        return data[:7], [x[0] for x in data[9:13]]
 
 
 def path_join_current(path):
