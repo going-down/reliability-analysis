@@ -1,5 +1,7 @@
 from report import dump_report, LOADS, DEVICE_SCHEME
 from utils import read_system_csv, path_join_current
+import re
+import numpy as np
 
 
 class Module:
@@ -39,8 +41,28 @@ class Function:
         self.name = name
         self.expr = expr
 
+    def evaluate(self, loads):
+        result = re.findall(r'\(\w+\)', self.expr)
+        print(result)
+
     def print(self):
         print(self.name + ": " + self.expr)
+
+
+def generate_vectors_single_error(number):
+    for i in range(number):
+        tmp_vector = np.ones(number, dtype=bool)
+        tmp_vector[i] = False
+        yield tmp_vector
+
+
+def generate_vectors_double_error(number):
+    for i in range(number - 1):
+        for j in range(i + 1, number):
+            tmp_vector = np.ones(number, dtype=bool)
+            tmp_vector[i] = False
+            tmp_vector[j] = False
+            yield tmp_vector
 
 
 def analyze_matrix(matrix):
@@ -64,7 +86,7 @@ def evaluate_all(loads, function_string, reject_probabilities, device_graph):
     analyze_matrix(loads)
     functions = analyze_functions(function_string)
     for i in functions:
-        i.print()
+        i.evaluate(loads)
 
 
 def main(report_path):
@@ -88,6 +110,14 @@ def main(report_path):
         'C6': {'D8'}
     }
     loads, function_string = read_system_csv(path_join_current('loads.csv'))
+    single_state_error = generate_vectors_single_error(23)
+    double_state_error = generate_vectors_double_error(23)
+
+    for i in single_state_error:
+        print(i)
+
+    for i in double_state_error:
+        print(i)
 
     dump_report(
         input={
