@@ -87,7 +87,7 @@ def analyze_functions(function_string):
     return functions
 
 
-def evaluate_all(loads, function_string, reject_probabilities, device_graph):
+def evaluate_all(loads, function_string, device_graph):
     analyze_matrix(loads)
     functions = analyze_functions(function_string)
     for i in functions:
