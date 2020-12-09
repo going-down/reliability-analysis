@@ -1,7 +1,12 @@
 from report import dump_report, LOADS, DEVICE_SCHEME
 from utils import read_system_csv, path_join_current
+from functools import reduce
 import re
 import numpy as np
+
+import itertools
+
+import graphviz
 
 
 class Module:
@@ -89,15 +94,98 @@ def evaluate_all(loads, function_string, reject_probabilities, device_graph):
         i.evaluate(loads)
 
 
+def plus(x, y):
+    # TODO: implement
+    pass
+
+
+def mult(x, y):
+    # TODO: implement
+    pass
+
+
+class Evalable:
+    def eval(self):
+        pass
+
+
+class S(Evalable):
+    def __init__(self, kind, *args):
+        self.kind = kind
+        self.args = args
+        self.op = {
+            '+': plus,
+            '*': mult
+        }
+
+    def eval(self):
+        return reduce(self.op[self.kind], self.args)  # I ain't happy with it either
+
+
+class SchemeElement(Evalable):
+    def __init__(self, i, reject_probability):
+        self.i = i
+        self.reject_probability = reject_probability
+
+
+class Pr(SchemeElement):
+    def eval(self):
+        pass
+
+
+class A(SchemeElement):
+    pass
+
+
+class B(SchemeElement):
+    pass
+
+
+class C(SchemeElement):
+    pass
+
+
+class D(SchemeElement):
+    pass
+
+
+class M(SchemeElement):
+    pass
+
+
+def pr(i):
+    return Pr(i, reject_probability=1.3E-4)
+
+
+def a(i):
+    return A(i, reject_probability=1.2E-4)
+
+
+def b(i):
+    return B(i, reject_probability=2.4E-5)
+
+
+def c(i):
+    return C(i, reject_probability=1.7E-4)
+
+
+def d(i):
+    return C(i, reject_probability=4.2E-4)
+
+
+def m(i):
+    return M(i, reject_probability=3.4E-4)
+
+
+def Or(*args):
+    return S('+', *args)
+
+
+def And(*args):
+    return S('*', *args)
+
+
 def main(report_path):
-    reject_probabilities = {
-        'Pr': 1.3E-4,
-        'A': 1.2E-4,
-        'B': 2.4E-5,
-        'C': 1.7E-4,
-        'D': 4.2E-5,
-        'M': 3.4E-4
-    }
     device_graph = {
         'B1': {'Pr1', 'Pr2', 'Pr3', 'Pr4', 'A1', 'C1', 'C2'},
         'B2': {'Pr1', 'Pr2', 'Pr3', 'Pr4', 'A1', 'C1', 'C2'},
@@ -119,6 +207,38 @@ def main(report_path):
     for i in double_state_error:
         print(i)
 
+    # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
+    # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
+    # f3=(D7vD8)xC5xB3x(Pr5vPr6vA2xM1xA1x(B1vB2)xPr2);;;;;;;;
+    # f4=D8xC6xB3x(Pr5vPr6v(A2xM1vA3xM2)xA1x(B1vB2)xPr2);;;;;;;;
+    f1 = And(Or(d(1), d(2)),
+             Or(c(1), c(2)),
+             Or(b(1), b(2)),
+             Or(pr(1), pr(2), pr(4)))
+    f2 = And(Or(d(2), d(3)),
+             c(2),
+             Or(b(1), b(2)),
+             Or(pr(3), pr(4), a(1), m(2), a(3), b(3), pr(5)))
+    f3 = And(Or(d(7), d(8)),
+             c(5),
+             b(3),
+             Or(pr(5), pr(6),
+                And(a(2), m(1), a(1),
+                    Or(b(1), b(2)), pr(2))))
+    f4 = And(d(8), c(6), b(3),
+             Or(pr(5), pr(6),
+                And(Or(And(a(2), m(1)),
+                       And(a(3), m(2))),
+                    a(1),
+                    Or(b(1), b(2)),
+                    pr(2))))
+
+    dot = graphviz.Graph()
+    for source, targets in device_graph.items():
+        for target in targets:
+            dot.edge(source, target)
+    dot.render(path_join_current('graph.dot'))
+
     dump_report(
         input={
             LOADS: loads,
@@ -127,7 +247,6 @@ def main(report_path):
         output=evaluate_all(
             loads=loads,
             function_string=function_string,
-            reject_probabilities=reject_probabilities,
             device_graph=device_graph),
         pathname=path_join_current(report_path),
         author=["", ""])
@@ -136,6 +255,15 @@ def main(report_path):
 REPORT_PATH = "report.docx"
 
 
+def place_ones(size, count):
+    for positions in itertools.combinations(range(size), count):
+        p = [0] * size
+        for i in positions:
+            p[i] = 1
+        yield p
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    print(len(list(place_ones(23, 4))))
     main(REPORT_PATH)
