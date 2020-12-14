@@ -64,7 +64,7 @@ class SchemeElement(ApplierToSSV):
 
     def apply_to_ssv(self, system_state_vector):
         is_not_failed = system_state_vector[self.key][self.i]
-        return SSVApplierResponse(is_not_failed, [self] if is_not_failed else [])
+        return SSVApplierResponse(is_not_failed, [] if is_not_failed else [self])
 
 
 class Pr(SchemeElement):
