@@ -255,7 +255,7 @@ def And(*args):
     return S('*', *args)
 
 
-def bit_vector_to_vss(bit_vector: List[bool]):
+def bit_vector_to_ssv(bit_vector: List[bool]):
     pr_n = len(DEVS['Pr'].values())
     a_n = pr_n + len(DEVS['A'].values())
     b_n = a_n + len(DEVS['B'].values())
@@ -276,6 +276,29 @@ def bit_vector_to_vss(bit_vector: List[bool]):
             for v_i, dev_i in zip(range(len(v)),
                                   sorted([x for x in DEVS[k].keys()]))))
         for k, v in typed_devs_bits.items())
+
+
+def ssv_device_probabilities(ssv: Dict[str, Dict[int, bool]],
+                             devs: Dict[str, Dict[int, SchemeElement]]):
+    for name, devices_states in ssv.items():
+        for i, state in devices_states.items():
+            dev_rejection_probability = devs[name][i].reject_probability
+            yield dev_rejection_probability if state is False else 1. - dev_rejection_probability
+
+
+def ssv_probability(ssv, devs):
+    return reduce((lambda p1, p2: p1 * p2), ssv_device_probabilities(ssv, devs))
+
+
+def test(f, bit_vectors):
+    for bit_vector in bit_vectors:
+        ssv = bit_vector_to_ssv(bit_vector)
+        resp = f.apply_to_ssv(ssv)
+        if not resp.is_not_failed:
+            print({
+                'prob': ssv_probability(ssv, DEVS),
+                'devs': resp.rejected_devices
+            })
 
 
 def main(report_path):
@@ -319,33 +342,15 @@ def main(report_path):
                     pr(2))))
 
     dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
-    single_state_error = generate_vectors_multiple_error(dev_n, 1)
-    double_state_error = generate_vectors_multiple_error(dev_n, 2)
-    triple_state_error = generate_vectors_multiple_error(dev_n, 3, 886)
-    quad_state_error = generate_vectors_multiple_error(dev_n, 4, 886)
-
-    fs = [f1, f2, f3, f4]
-    for f in fs:
+    for f in [f1, f2, f3, f4]:
         print("1")
-        for i in single_state_error:
-            resp = f.apply_to_ssv(bit_vector_to_vss(i))
-            if not resp.is_not_failed:
-                print(resp.rejected_devices)
+        test(f, generate_vectors_multiple_error(dev_n, 1))
         print("2")
-        for i in double_state_error:
-            resp = f.apply_to_ssv(bit_vector_to_vss(i))
-            if not resp.is_not_failed:
-                print(resp.rejected_devices)
+        test(f, generate_vectors_multiple_error(dev_n, 2))
         print("3")
-        for i in triple_state_error:
-            resp = f.apply_to_ssv(bit_vector_to_vss(i))
-            if not resp.is_not_failed:
-                print(resp.rejected_devices)
+        test(f, generate_vectors_multiple_error(dev_n, 3, 886))
         print("4")
-        for i in quad_state_error:
-            resp = f.apply_to_ssv(bit_vector_to_vss(i))
-            if not resp.is_not_failed:
-                print(resp.rejected_devices)
+        test(f, generate_vectors_multiple_error(dev_n, 4, 886))
         print()
 
     dot = graphviz.Graph()
