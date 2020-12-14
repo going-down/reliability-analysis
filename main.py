@@ -144,7 +144,7 @@ def mult(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
 
 
 class ApplierToSSV:
-    def apply_to_ssv(self, system_state_vector: Dict[Tuple[bool]]) -> SSVApplierResponse:
+    def apply_to_ssv(self, system_state_vector: Dict[str, Tuple[bool]]) -> SSVApplierResponse:
         pass
 
 
