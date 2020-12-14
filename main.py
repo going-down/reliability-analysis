@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 from report import dump_report, LOADS, DEVICE_SCHEME
 from utils import read_system_csv, path_join_current
@@ -124,6 +124,12 @@ class SSVApplierResponse:
         self.is_not_failed = is_not_failed
         self.rejected_devices = rejected_devices
 
+    def __repr__(self):
+        return {
+            'is_not_failed': self.is_not_failed,
+            'rejected_devices': self.rejected_devices
+        }.__repr__()
+
 
 def plus(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
     """
@@ -144,7 +150,7 @@ def mult(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
 
 
 class ApplierToSSV:
-    def apply_to_ssv(self, system_state_vector: Dict[str, Tuple[bool]]) -> SSVApplierResponse:
+    def apply_to_ssv(self, system_state_vector: Dict[str, List[bool]]) -> SSVApplierResponse:
         pass
 
 
@@ -167,6 +173,11 @@ class SchemeElement(ApplierToSSV):
         self.i = i
         self.reject_probability = reject_probability
         self.key = key
+
+    def __repr__(self):
+        return {
+            self.key: self.i
+        }.__repr__()
 
     def apply_to_ssv(self, system_state_vector):
         is_not_failed = system_state_vector[self.key][self.i]
@@ -229,6 +240,22 @@ def And(*args):
     return S('*', *args)
 
 
+def bit_vector_to_vss(bit_vector: List[bool], pr_n=6, a_n=3, b_n=3, c_n=6, d_n=8, m_n=2):
+    a_n = pr_n + a_n
+    b_n = a_n + b_n
+    c_n = b_n + c_n
+    d_n = c_n + d_n
+    m_n = d_n + m_n
+    return {
+        'Pr': bit_vector[:pr_n],
+        'A': bit_vector[pr_n:a_n],
+        'B': bit_vector[a_n:b_n],
+        'C': bit_vector[b_n:c_n],
+        'D': bit_vector[c_n:d_n],
+        'M': bit_vector[d_n:m_n]
+    }
+
+
 def main(report_path):
     device_graph = {
         'B1': {'Pr1', 'Pr2', 'Pr3', 'Pr4', 'A1', 'C1', 'C2'},
@@ -242,23 +269,6 @@ def main(report_path):
         'C6': {'D8'}
     }
     loads, function_string = read_system_csv(path_join_current('loads.csv'))
-    single_state_error = generate_vectors_multiple_error(23, 1)
-    double_state_error = generate_vectors_multiple_error(23, 2)
-    triple_state_error = generate_vectors_multiple_error(23, 3, 886)
-    quad_state_error = generate_vectors_multiple_error(23, 4, 886)
-
-    for i in single_state_error:
-        print(i)
-
-    for i in double_state_error:
-        print(i)
-
-    for i in triple_state_error:
-        print(i)
-
-    for i in quad_state_error:
-        print(i)
-
     # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
     # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
     # f3=(D7vD8)xC5xB3x(Pr5vPr6vA2xM1xA1x(B1vB2)xPr2);;;;;;;;
@@ -285,6 +295,26 @@ def main(report_path):
                     a(1),
                     Or(b(1), b(2)),
                     pr(2))))
+
+    single_state_error = generate_vectors_multiple_error(23, 1)
+    double_state_error = generate_vectors_multiple_error(23, 2)
+    triple_state_error = generate_vectors_multiple_error(23, 3, 886)
+    quad_state_error = generate_vectors_multiple_error(23, 4, 886)
+
+    for i in single_state_error:
+        print(f1.apply_to_ssv(bit_vector_to_vss(i)))
+
+    for i in double_state_error:
+        pass
+        # print(i)
+
+    for i in triple_state_error:
+        pass
+        # print(i)
+
+    for i in quad_state_error:
+        pass
+        # print(i)
 
     dot = graphviz.Graph()
     for source, targets in device_graph.items():
