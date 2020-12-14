@@ -180,7 +180,7 @@ class SchemeElement(ApplierToSSV):
         }.__repr__()
 
     def apply_to_ssv(self, system_state_vector):
-        is_not_failed = system_state_vector[self.key][self.i]
+        is_not_failed = system_state_vector[self.key][self.i-1]
         return SSVApplierResponse(is_not_failed, [self] if is_not_failed else [])
 
 
@@ -268,6 +268,12 @@ def main(report_path):
         'C5': {'D7', 'D8'},
         'C6': {'D8'}
     }
+    pr_n = 6
+    a_n = 3
+    b_n = 3
+    c_n = 6
+    d_n = 8
+    m_n = 2
     loads, function_string = read_system_csv(path_join_current('loads.csv'))
     # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
     # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
@@ -296,25 +302,35 @@ def main(report_path):
                     Or(b(1), b(2)),
                     pr(2))))
 
-    single_state_error = generate_vectors_multiple_error(23, 1)
-    double_state_error = generate_vectors_multiple_error(23, 2)
-    triple_state_error = generate_vectors_multiple_error(23, 3, 886)
-    quad_state_error = generate_vectors_multiple_error(23, 4, 886)
+    dev_n = pr_n + a_n + b_n + c_n + d_n + m_n
+    single_state_error = generate_vectors_multiple_error(dev_n, 1)
+    double_state_error = generate_vectors_multiple_error(dev_n, 2)
+    triple_state_error = generate_vectors_multiple_error(dev_n, 3, 886)
+    quad_state_error = generate_vectors_multiple_error(dev_n, 4, 886)
 
-    for i in single_state_error:
-        print(f1.apply_to_ssv(bit_vector_to_vss(i)))
-
-    for i in double_state_error:
-        pass
-        # print(i)
-
-    for i in triple_state_error:
-        pass
-        # print(i)
-
-    for i in quad_state_error:
-        pass
-        # print(i)
+    fs = [f1, f2, f3, f4]
+    for f in fs:
+        print("1")
+        for i in single_state_error:
+            resp = f.apply_to_ssv(bit_vector_to_vss(i))
+            if not resp.is_not_failed:
+                print(resp.rejected_devices)
+        print("2")
+        for i in double_state_error:
+            resp = f.apply_to_ssv(bit_vector_to_vss(i))
+            if not resp.is_not_failed:
+                print(resp.rejected_devices)
+        print("3")
+        for i in triple_state_error:
+            resp = f.apply_to_ssv(bit_vector_to_vss(i))
+            if not resp.is_not_failed:
+                print(resp.rejected_devices)
+        print("4")
+        for i in quad_state_error:
+            resp = f.apply_to_ssv(bit_vector_to_vss(i))
+            if not resp.is_not_failed:
+                print(resp.rejected_devices)
+        print()
 
     dot = graphviz.Graph()
     for source, targets in device_graph.items():
