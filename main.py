@@ -6,6 +6,8 @@ import numpy as np
 
 import itertools
 
+import random
+
 import graphviz
 
 
@@ -104,12 +106,12 @@ def mult(x, y):
     pass
 
 
-class Evalable:
-    def eval(self):
+class ApplierToSSV:
+    def apply_to_ssv(self):
         pass
 
 
-class S(Evalable):
+class S(ApplierToSSV):
     def __init__(self, kind, *args):
         self.kind = kind
         self.args = args
@@ -118,18 +120,18 @@ class S(Evalable):
             '*': mult
         }
 
-    def eval(self):
+    def apply_to_ssv(self):
         return reduce(self.op[self.kind], self.args)  # I ain't happy with it either
 
 
-class SchemeElement(Evalable):
+class SchemeElement(ApplierToSSV):
     def __init__(self, i, reject_probability):
         self.i = i
         self.reject_probability = reject_probability
 
 
 class Pr(SchemeElement):
-    def eval(self):
+    def apply_to_ssv(self):
         pass
 
 
@@ -224,7 +226,8 @@ def main(report_path):
              b(3),
              Or(pr(5), pr(6),
                 And(a(2), m(1), a(1),
-                    Or(b(1), b(2)), pr(2))))
+                    Or(b(1), b(2)),
+                    pr(2))))
     f4 = And(d(8), c(6), b(3),
              Or(pr(5), pr(6),
                 And(Or(And(a(2), m(1)),
@@ -257,13 +260,15 @@ REPORT_PATH = "report.docx"
 
 def place_ones(size, count):
     for positions in itertools.combinations(range(size), count):
-        p = [0] * size
+        p = [True] * size
         for i in positions:
-            p[i] = 1
+            p[i] = False
         yield p
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(len(list(place_ones(23, 4))))
+    print(random.shuffle(list(place_ones(23, 10))))
     main(REPORT_PATH)
+    print(len(list(place_ones(23, 3))))
+
