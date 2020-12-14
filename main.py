@@ -4,11 +4,10 @@ from functools import reduce
 import re
 import numpy as np
 
-import itertools
+import graphviz
+from itertools import combinations
 
 import random
-
-import graphviz
 
 
 class Module:
@@ -56,6 +55,9 @@ class Function:
         print(self.name + ": " + self.expr)
 
 
+"""Unnecessary piece of crap till....------"""
+#TODO: delete these?
+
 def generate_vectors_single_error(number):
     for i in range(number):
         tmp_vector = np.ones(number, dtype=bool)
@@ -70,6 +72,25 @@ def generate_vectors_double_error(number):
             tmp_vector[i] = False
             tmp_vector[j] = False
             yield tmp_vector
+
+
+"""... till this ------------------------"""
+
+
+def generate_vectors_multiple_error(blocks_number, error_count, length=0):
+    """
+    Generates Vi vectors aka System State Vector
+    """
+    vector = []
+    for positions in combinations(range(blocks_number), error_count):
+        p = [True] * blocks_number
+        for i in positions:
+            p[i] = False
+        vector.append(p)
+    random.shuffle(vector)
+    if length == 0:
+        return vector
+    return vector[:length]
 
 
 def analyze_matrix(matrix):
@@ -200,13 +221,21 @@ def main(report_path):
         'C6': {'D8'}
     }
     loads, function_string = read_system_csv(path_join_current('loads.csv'))
-    single_state_error = generate_vectors_single_error(23)
-    double_state_error = generate_vectors_double_error(23)
+    single_state_error = generate_vectors_multiple_error(23, 1)
+    double_state_error = generate_vectors_multiple_error(23, 2)
+    triple_state_error = generate_vectors_multiple_error(23, 3, 886)
+    quad_state_error = generate_vectors_multiple_error(23, 4, 886)
 
     for i in single_state_error:
         print(i)
 
     for i in double_state_error:
+        print(i)
+
+    for i in triple_state_error:
+        print(i)
+
+    for i in quad_state_error:
         print(i)
 
     # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
@@ -240,8 +269,9 @@ def main(report_path):
     for source, targets in device_graph.items():
         for target in targets:
             dot.edge(source, target)
-    dot.render(path_join_current('graph.dot'))
+    #dot.render(path_join_current('graph.dot'))
 
+    #list_ = list(place_ones(23, 4))
     dump_report(
         input={
             LOADS: loads,
@@ -258,8 +288,9 @@ def main(report_path):
 REPORT_PATH = "report.docx"
 
 
+#TODO: delete this?
 def place_ones(size, count):
-    for positions in itertools.combinations(range(size), count):
+    for positions in combinations(range(size), count):
         p = [True] * size
         for i in positions:
             p[i] = False
@@ -268,7 +299,6 @@ def place_ones(size, count):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    #print(len(list(place_ones(23, 4))))
     print(random.shuffle(list(place_ones(23, 10))))
     main(REPORT_PATH)
-    print(len(list(place_ones(23, 3))))
-
