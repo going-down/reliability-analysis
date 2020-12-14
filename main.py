@@ -1,29 +1,14 @@
-from typing import Tuple, Dict, List
-
-from report import dump_report, LOADS, DEVICE_SCHEME
-from utils import read_system_csv, path_join_current
-from functools import reduce
-import re
-import numpy as np
-
-import graphviz
+from typing import Dict, List
 from itertools import combinations
+from functools import reduce
 
+import re
+import graphviz
 import random
 
-
-class Module:
-    """
-    Module of system, such as
-    Prn(processor number n),
-    Bn(bus number n),
-    Mn(magistral?? number n),
-    An(Adapter number n),
-    Cn(connector?? n),
-    Dn(sensor?? n)
-    """
-    def __init__(self, name):
-        self.name = name
+from utils import read_system_csv, path_join_current
+from report import dump_report, LOADS, DEVICE_SCHEME
+from system import pr, a, b, c, d, m, DEVS, And, Or, SchemeElement
 
 
 class Processor:
@@ -35,26 +20,6 @@ class Processor:
 
     def print(self):
         print(self.name + ": " + self.t_n + " " + self.t_max + " ", self.replace_processors)
-
-
-class Function:
-    """
-    Part of system.
-    If one of functions results as 0 system is not working.
-
-    init: expression string.
-
-    """
-    def __init__(self, name, expr):
-        self.name = name
-        self.expr = expr
-
-    def evaluate(self, loads):
-        result = re.findall(r'\(\w+\)', self.expr)
-        print(result)
-
-    def print(self):
-        print(self.name + ": " + self.expr)
 
 
 def generate_vectors_multiple_error(blocks_number, error_count, length=0):
@@ -83,154 +48,30 @@ def analyze_matrix(matrix):
         i.print()
 
 
-def analyze_functions(function_string):
-    functions = []
-    for i in function_string:
-        functions.append(Function(i[:2], i[3:]))
-    return functions
+def analyze_function(f, bit_vectors):
+    for bit_vector in bit_vectors:
+        ssv = bit_vector_to_ssv(bit_vector)
+        resp = f.apply_to_ssv(ssv)
+        if not resp.is_not_failed:
+            print({
+                'prob': ssv_probability(ssv, DEVS),
+                'devs': resp.rejected_devices
+            })
 
 
-def evaluate_all(loads, function_string, device_graph):
+def evaluate_all(loads, fns, device_graph):
     analyze_matrix(loads)
-    functions = analyze_functions(function_string)
-    for i in functions:
-        i.evaluate(loads)
-
-
-class SSVApplierResponse:
-    def __init__(self, is_not_failed, rejected_devices):
-        self.is_not_failed = is_not_failed
-        self.rejected_devices = rejected_devices
-
-    def __repr__(self):
-        return {
-            'is_not_failed': self.is_not_failed,
-            'rejected_devices': self.rejected_devices
-        }.__repr__()
-
-
-def plus(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
-    """
-    OR
-    """
-    is_not_failed = x.is_not_failed or y.is_not_failed
-    rejected_devices = x.rejected_devices + y.rejected_devices
-    return SSVApplierResponse(is_not_failed, rejected_devices)
-
-
-def mult(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
-    """
-    AND
-    """
-    is_not_failed = x.is_not_failed and y.is_not_failed
-    rejected_devices = x.rejected_devices + y.rejected_devices
-    return SSVApplierResponse(is_not_failed, rejected_devices)
-
-
-class ApplierToSSV:
-    def apply_to_ssv(self, system_state_vector: Dict[str, List[bool]]) -> SSVApplierResponse:
-        pass
-
-
-class S(ApplierToSSV):
-    def __init__(self, kind, *args: ApplierToSSV):
-        self.kind = kind
-        self.args = args
-        self.op = {
-            '+': plus,
-            '*': mult
-        }
-
-    def apply_to_ssv(self, system_state_vector):
-        return reduce(self.op[self.kind],
-                      [x.apply_to_ssv(system_state_vector) for x in self.args])
-
-
-class SchemeElement(ApplierToSSV):
-    def __init__(self, i, reject_probability, key):
-        self.i = i
-        self.reject_probability = reject_probability
-        self.key = key
-
-    def __repr__(self):
-        return {
-            self.key: self.i
-        }.__repr__()
-
-    def apply_to_ssv(self, system_state_vector):
-        is_not_failed = system_state_vector[self.key][self.i]
-        return SSVApplierResponse(is_not_failed, [self] if is_not_failed else [])
-
-
-class Pr(SchemeElement):
-    pass
-
-
-class A(SchemeElement):
-    pass
-
-
-class B(SchemeElement):
-    pass
-
-
-class C(SchemeElement):
-    pass
-
-
-class D(SchemeElement):
-    pass
-
-
-class M(SchemeElement):
-    pass
-
-
-DEVS = {
-    'Pr': dict(),
-    'A': dict(),
-    'B': dict(),
-    'C': dict(),
-    'D': dict(),
-    'M': dict()
-}
-
-
-def make_dev(init, i, prob, name):
-    DEVS[name][i] = init(i, prob, name)
-    return DEVS[name][i]
-
-
-def pr(i):
-    return make_dev(Pr, i, 1.3E-4, 'Pr')
-
-
-def a(i):
-    return make_dev(A, i, 1.2E-4, 'A')
-
-
-def b(i):
-    return make_dev(B, i, 2.4E-5, 'B')
-
-
-def c(i):
-    return make_dev(C, i, 1.7E-4, 'C')
-
-
-def d(i):
-    return make_dev(C, i, 4.2E-4, 'D')
-
-
-def m(i):
-    return make_dev(M, i, 3.4E-4, 'M')
-
-
-def Or(*args):
-    return S('+', *args)
-
-
-def And(*args):
-    return S('*', *args)
+    dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
+    for f in fns:
+        print("1")
+        analyze_function(f, generate_vectors_multiple_error(dev_n, 1))
+        print("2")
+        analyze_function(f, generate_vectors_multiple_error(dev_n, 2))
+        print("3")
+        analyze_function(f, generate_vectors_multiple_error(dev_n, 3, 886))
+        print("4")
+        analyze_function(f, generate_vectors_multiple_error(dev_n, 4, 886))
+        print()
 
 
 def bit_vector_to_ssv(bit_vector: List[bool]):
@@ -266,17 +107,6 @@ def ssv_device_probabilities(ssv: Dict[str, Dict[int, bool]],
 
 def ssv_probability(ssv, devs):
     return reduce((lambda p1, p2: p1 * p2), ssv_device_probabilities(ssv, devs))
-
-
-def test(f, bit_vectors):
-    for bit_vector in bit_vectors:
-        ssv = bit_vector_to_ssv(bit_vector)
-        resp = f.apply_to_ssv(ssv)
-        if not resp.is_not_failed:
-            print({
-                'prob': ssv_probability(ssv, DEVS),
-                'devs': resp.rejected_devices
-            })
 
 
 def main(report_path):
@@ -318,19 +148,6 @@ def main(report_path):
                     a(1),
                     Or(b(1), b(2)),
                     pr(2))))
-
-    dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
-    for f in [f1, f2, f3, f4]:
-        print("1")
-        test(f, generate_vectors_multiple_error(dev_n, 1))
-        print("2")
-        test(f, generate_vectors_multiple_error(dev_n, 2))
-        print("3")
-        test(f, generate_vectors_multiple_error(dev_n, 3, 886))
-        print("4")
-        test(f, generate_vectors_multiple_error(dev_n, 4, 886))
-        print()
-
     dot = graphviz.Graph()
     for source, targets in device_graph.items():
         for target in targets:
@@ -345,24 +162,13 @@ def main(report_path):
         },
         output=evaluate_all(
             loads=loads,
-            function_string=function_string,
+            fns=[f1, f2, f3, f4],
             device_graph=device_graph),
         pathname=path_join_current(report_path),
         author=["", ""])
 
 
 REPORT_PATH = "report.docx"
-
-
-#TODO: delete this?
-def place_ones(size, count):
-    for positions in combinations(range(size), count):
-        p = [True] * size
-        for i in positions:
-            p[i] = False
-        yield p
-
-
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     #print(len(list(place_ones(23, 4))))
