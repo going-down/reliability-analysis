@@ -3,6 +3,12 @@ from docx import Document
 
 DEVICE_SCHEME = 'device-scheme'
 LOADS = 'loads'
+FNS = 'fns'
+
+
+class DumpAble:
+    def dump(self):
+        pass
 
 
 def title(doc, data):
@@ -36,6 +42,7 @@ def add_table_from_matrix(doc, matrix):
 
 def input_task(doc, data):
     """1. Исходное задание;"""
+    doc.add_paragraph("1. Початкове завдання")
     doc.add_picture(data['input'][DEVICE_SCHEME])
     add_table_from_matrix(doc, data['input'][LOADS])
     doc.add_page_break()
@@ -43,7 +50,9 @@ def input_task(doc, data):
 
 def task_function_list(doc, data):
     """2. Перечень составленных функций задач;"""
-    #doc.add_table([], [])
+    doc.add_paragraph("2. Список складених функцій задач")
+    for i, f in enumerate(data['input'][FNS]):
+        doc.add_paragraph("f%i" % (i+1) + ' = ' + f.dump())
 
 
 def load_balancing(doc, data):
@@ -99,12 +108,12 @@ def document_do_all(doc, data, *funcs):
         func(doc, data)
 
 
-def dump_report(input, output, pathname, author):
+def dump_report(data, output, pathname, author):
     doc = Document()
     document_do_all(doc,
                     {
                         'author': author,
-                        'input': input,
+                        'input': data,
                         'output': output,
                     },
                     title,

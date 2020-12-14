@@ -7,7 +7,7 @@ import graphviz
 import random
 
 from utils import read_system_csv, path_join_current
-from report import dump_report, LOADS, DEVICE_SCHEME
+from report import dump_report, LOADS, DEVICE_SCHEME, FNS
 from system import pr, a, b, c, d, m, DEVS, And, Or, SchemeElement
 
 
@@ -156,7 +156,8 @@ def main(report_path):
 
     #list_ = list(place_ones(23, 4))
     dump_report(
-        input={
+        data={
+            FNS: [f1, f2, f3, f4],
             LOADS: loads,
             DEVICE_SCHEME: path_join_current('scheme.jpg')
         },
@@ -166,11 +167,12 @@ def main(report_path):
             device_graph=device_graph),
         pathname=path_join_current(report_path),
         author=["", ""])
+    print(f1.dump())
+    print(f2.dump())
+    print(f3.dump())
+    print(f4.dump())
 
 
 REPORT_PATH = "report.docx"
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    #print(len(list(place_ones(23, 4))))
-    #print(random.shuffle(list(place_ones(23, 10))))
     main(REPORT_PATH)

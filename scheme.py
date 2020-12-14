@@ -1,6 +1,8 @@
 from typing import Dict, List
 from functools import reduce
 
+from report import DumpAble
+
 
 class SSVApplierResponse:
     def __init__(self, is_not_failed, rejected_devices):
@@ -32,7 +34,7 @@ def mult(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
     return SSVApplierResponse(is_not_failed, rejected_devices)
 
 
-class ApplierToSSV:
+class ApplierToSSV(DumpAble):
     def apply_to_ssv(self, system_state_vector: Dict[str, List[bool]]) -> SSVApplierResponse:
         pass
 
@@ -45,6 +47,16 @@ class S(ApplierToSSV):
             '+': plus,
             '*': mult
         }
+
+    op_dump_map = {
+        '+': lambda x, y: "%s ∨ %s" % (x, y),
+        '*': lambda x, y: "%s ∧ %s" % (x, y)
+    }
+
+    def dump(self):
+        return reduce(self.op_dump_map[self.kind],
+                      ('('+x.dump()+')' if isinstance(x, S) and x.kind == '+' else x.dump()
+                       for x in self.args))
 
     def apply_to_ssv(self, system_state_vector):
         return reduce(self.op[self.kind],
@@ -61,6 +73,9 @@ class SchemeElement(ApplierToSSV):
         return {
             self.key: self.i
         }.__repr__()
+
+    def dump(self):
+        return "%s%s" % (self.key, self.i)
 
     def apply_to_ssv(self, system_state_vector):
         is_not_failed = system_state_vector[self.key][self.i]
