@@ -1,3 +1,5 @@
+from typing import Tuple, Dict
+
 from report import dump_report, LOADS, DEVICE_SCHEME
 from utils import read_system_csv, path_join_current
 from functools import reduce
@@ -117,23 +119,37 @@ def evaluate_all(loads, function_string, device_graph):
         i.evaluate(loads)
 
 
-def plus(x, y):
-    # TODO: implement
-    pass
+class SSVApplierResponse:
+    def __init__(self, is_not_failed, rejected_devices):
+        self.is_not_failed = is_not_failed
+        self.rejected_devices = rejected_devices
 
 
-def mult(x, y):
-    # TODO: implement
-    pass
+def plus(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
+    """
+    OR
+    """
+    is_not_failed = x.is_not_failed or y.is_not_failed
+    rejected_devices = x.rejected_devices + y.rejected_devices
+    return SSVApplierResponse(is_not_failed, rejected_devices)
+
+
+def mult(x: SSVApplierResponse, y: SSVApplierResponse) -> SSVApplierResponse:
+    """
+    AND
+    """
+    is_not_failed = x.is_not_failed and y.is_not_failed
+    rejected_devices = x.rejected_devices + y.rejected_devices
+    return SSVApplierResponse(is_not_failed, rejected_devices)
 
 
 class ApplierToSSV:
-    def apply_to_ssv(self):
+    def apply_to_ssv(self, system_state_vector: Dict[Tuple[bool]]) -> SSVApplierResponse:
         pass
 
 
 class S(ApplierToSSV):
-    def __init__(self, kind, *args):
+    def __init__(self, kind, *args: ApplierToSSV):
         self.kind = kind
         self.args = args
         self.op = {
@@ -141,19 +157,24 @@ class S(ApplierToSSV):
             '*': mult
         }
 
-    def apply_to_ssv(self):
-        return reduce(self.op[self.kind], self.args)  # I ain't happy with it either
+    def apply_to_ssv(self, system_state_vector):
+        return reduce(self.op[self.kind],
+                      [x.apply_to_ssv(system_state_vector) for x in self.args])
 
 
 class SchemeElement(ApplierToSSV):
-    def __init__(self, i, reject_probability):
+    def __init__(self, i, reject_probability, key):
         self.i = i
         self.reject_probability = reject_probability
+        self.key = key
+
+    def apply_to_ssv(self, system_state_vector):
+        is_not_failed = system_state_vector[self.key][self.i]
+        return SSVApplierResponse(is_not_failed, [self] if is_not_failed else [])
 
 
 class Pr(SchemeElement):
-    def apply_to_ssv(self):
-        pass
+    pass
 
 
 class A(SchemeElement):
@@ -177,27 +198,27 @@ class M(SchemeElement):
 
 
 def pr(i):
-    return Pr(i, reject_probability=1.3E-4)
+    return Pr(i, 1.3E-4, 'Pr')
 
 
 def a(i):
-    return A(i, reject_probability=1.2E-4)
+    return A(i, 1.2E-4, 'A')
 
 
 def b(i):
-    return B(i, reject_probability=2.4E-5)
+    return B(i, 2.4E-5, 'B')
 
 
 def c(i):
-    return C(i, reject_probability=1.7E-4)
+    return C(i, 1.7E-4, 'C')
 
 
 def d(i):
-    return C(i, reject_probability=4.2E-4)
+    return C(i, 4.2E-4, 'D')
 
 
 def m(i):
-    return M(i, reject_probability=3.4E-4)
+    return M(i, 3.4E-4, 'M')
 
 
 def Or(*args):
@@ -300,5 +321,5 @@ def place_ones(size, count):
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     #print(len(list(place_ones(23, 4))))
-    print(random.shuffle(list(place_ones(23, 10))))
+    #print(random.shuffle(list(place_ones(23, 10))))
     main(REPORT_PATH)
