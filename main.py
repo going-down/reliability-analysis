@@ -180,7 +180,7 @@ class SchemeElement(ApplierToSSV):
         }.__repr__()
 
     def apply_to_ssv(self, system_state_vector):
-        is_not_failed = system_state_vector[self.key][self.i-1]
+        is_not_failed = system_state_vector[self.key][self.i]
         return SSVApplierResponse(is_not_failed, [self] if is_not_failed else [])
 
 
@@ -208,28 +208,43 @@ class M(SchemeElement):
     pass
 
 
+DEVS = {
+    'Pr': dict(),
+    'A': dict(),
+    'B': dict(),
+    'C': dict(),
+    'D': dict(),
+    'M': dict()
+}
+
+
+def make_dev(init, i, prob, name):
+    DEVS[name][i] = init(i, prob, name)
+    return DEVS[name][i]
+
+
 def pr(i):
-    return Pr(i, 1.3E-4, 'Pr')
+    return make_dev(Pr, i, 1.3E-4, 'Pr')
 
 
 def a(i):
-    return A(i, 1.2E-4, 'A')
+    return make_dev(A, i, 1.2E-4, 'A')
 
 
 def b(i):
-    return B(i, 2.4E-5, 'B')
+    return make_dev(B, i, 2.4E-5, 'B')
 
 
 def c(i):
-    return C(i, 1.7E-4, 'C')
+    return make_dev(C, i, 1.7E-4, 'C')
 
 
 def d(i):
-    return C(i, 4.2E-4, 'D')
+    return make_dev(C, i, 4.2E-4, 'D')
 
 
 def m(i):
-    return M(i, 3.4E-4, 'M')
+    return make_dev(M, i, 3.4E-4, 'M')
 
 
 def Or(*args):
@@ -240,13 +255,14 @@ def And(*args):
     return S('*', *args)
 
 
-def bit_vector_to_vss(bit_vector: List[bool], pr_n=6, a_n=3, b_n=3, c_n=6, d_n=8, m_n=2):
-    a_n = pr_n + a_n
-    b_n = a_n + b_n
-    c_n = b_n + c_n
-    d_n = c_n + d_n
-    m_n = d_n + m_n
-    return {
+def bit_vector_to_vss(bit_vector: List[bool]):
+    pr_n = len(DEVS['Pr'].values())
+    a_n = pr_n + len(DEVS['A'].values())
+    b_n = a_n + len(DEVS['B'].values())
+    c_n = b_n + len(DEVS['C'].values())
+    d_n = c_n + len(DEVS['D'].values())
+    m_n = d_n + len(DEVS['M'].values())
+    typed_devs_bits = {
         'Pr': bit_vector[:pr_n],
         'A': bit_vector[pr_n:a_n],
         'B': bit_vector[a_n:b_n],
@@ -254,6 +270,12 @@ def bit_vector_to_vss(bit_vector: List[bool], pr_n=6, a_n=3, b_n=3, c_n=6, d_n=8
         'D': bit_vector[c_n:d_n],
         'M': bit_vector[d_n:m_n]
     }
+    return dict(
+        (k, dict(
+            (dev_i, v[v_i])
+            for v_i, dev_i in zip(range(len(v)),
+                                  sorted([x for x in DEVS[k].keys()]))))
+        for k, v in typed_devs_bits.items())
 
 
 def main(report_path):
@@ -268,12 +290,6 @@ def main(report_path):
         'C5': {'D7', 'D8'},
         'C6': {'D8'}
     }
-    pr_n = 6
-    a_n = 3
-    b_n = 3
-    c_n = 6
-    d_n = 8
-    m_n = 2
     loads, function_string = read_system_csv(path_join_current('loads.csv'))
     # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
     # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
@@ -302,7 +318,7 @@ def main(report_path):
                     Or(b(1), b(2)),
                     pr(2))))
 
-    dev_n = pr_n + a_n + b_n + c_n + d_n + m_n
+    dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
     single_state_error = generate_vectors_multiple_error(dev_n, 1)
     double_state_error = generate_vectors_multiple_error(dev_n, 2)
     triple_state_error = generate_vectors_multiple_error(dev_n, 3, 886)
