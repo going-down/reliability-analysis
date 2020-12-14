@@ -57,28 +57,6 @@ class Function:
         print(self.name + ": " + self.expr)
 
 
-"""Unnecessary piece of crap till....------"""
-#TODO: delete these?
-
-def generate_vectors_single_error(number):
-    for i in range(number):
-        tmp_vector = np.ones(number, dtype=bool)
-        tmp_vector[i] = False
-        yield tmp_vector
-
-
-def generate_vectors_double_error(number):
-    for i in range(number - 1):
-        for j in range(i + 1, number):
-            tmp_vector = np.ones(number, dtype=bool)
-            tmp_vector[i] = False
-            tmp_vector[j] = False
-            yield tmp_vector
-
-
-"""... till this ------------------------"""
-
-
 def generate_vectors_multiple_error(blocks_number, error_count, length=0):
     """
     Generates Vi vectors aka System State Vector
