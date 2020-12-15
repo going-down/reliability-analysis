@@ -2,7 +2,6 @@ from typing import Dict, List
 from itertools import combinations
 from functools import reduce
 
-import re
 import graphviz
 import random
 
@@ -20,6 +19,37 @@ class Processor:
 
     def print(self):
         print(self.name + ": " + self.t_n + " " + self.t_max + " ", self.replace_processors)
+
+
+class FailedDevs:
+    def __init__(self, is_modified: bool):
+        self.devs = {
+            'Pr1': 0,
+            'Pr2': 0,
+            'Pr3': 0,
+            'Pr4': 0,
+            'Pr5': 0,
+            'Pr6': 0,
+            'C1': 0,
+            'C2': 0,
+            'C5': 0,
+            'C6': 0,
+            'D1': 0,
+            'D2': 0,
+            'D3': 0,
+            'D7': 0,
+            'D8': 0,
+            'A1': 0,
+            'A2': 0,
+            'A3': 0,
+            'M1': 0,
+            'M2': 0,
+            'B1': 0,
+            'B2': 0,
+            'B3': 0,
+        }
+        if is_modified:
+            self.devs['B4'] = 0
 
 
 def generate_vectors_multiple_error(blocks_number, error_count, length=0):
@@ -49,6 +79,9 @@ def analyze_matrix(matrix):
 
 
 def analyze_function(f, bit_vectors):
+    summary = 0.0
+    fails = 0
+
     for bit_vector in bit_vectors:
         ssv = bit_vector_to_ssv(bit_vector)
         resp = f.apply_to_ssv(ssv)
@@ -57,21 +90,31 @@ def analyze_function(f, bit_vectors):
                 'prob': ssv_probability(ssv, DEVS),
                 'devs': resp.rejected_devices
             })
+            summary = summary + ssv_probability(ssv, DEVS)
+            fails = fails + 1
+    print(summary)
+    print("failed " + fails.__str__())
+    return summary
 
 
 def evaluate_all(loads, fns, device_graph):
     analyze_matrix(loads)
     dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
+    iteret = 0
     for f in fns:
-        print("1")
-        analyze_function(f, generate_vectors_multiple_error(dev_n, 1))
-        print("2")
-        analyze_function(f, generate_vectors_multiple_error(dev_n, 2))
-        print("3")
-        analyze_function(f, generate_vectors_multiple_error(dev_n, 3, 886))
-        print("4")
-        analyze_function(f, generate_vectors_multiple_error(dev_n, 4, 886))
+        summary = 0
+        print("f" + iteret.__str__())
+        print("1-x error")
+        summary = summary + analyze_function(f, generate_vectors_multiple_error(dev_n, 1))
+        print("2-x error")
+        summary = summary + analyze_function(f, generate_vectors_multiple_error(dev_n, 2))
+        print("3-x error")
+        summary = summary + 2 * analyze_function(f, generate_vectors_multiple_error(dev_n, 3, 886))
+        print("4-x error")
+        summary = summary + 10 * analyze_function(f, generate_vectors_multiple_error(dev_n, 4, 886))
+        print(summary)
         print()
+        iteret = iteret + 1
 
 
 def bit_vector_to_ssv(bit_vector: List[bool]):
