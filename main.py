@@ -51,6 +51,18 @@ class FailedDevs:
         if is_modified:
             self.devs['B4'] = 0
 
+    def recalc(self, failed_devs: List[SchemeElement]):
+        for dev in failed_devs:
+            self.devs[dev.key + dev.i.__str__()] += 1
+
+    def zero(self):
+        for dev in self.devs:
+            self.devs[dev] = 0
+
+    def print(self):
+        for dev in self.devs:
+            print(dev + ": " + self.devs[dev].__str__() + ", ")
+
 
 def generate_vectors_multiple_error(blocks_number, error_count, length=0):
     """
@@ -78,18 +90,18 @@ def analyze_matrix(matrix):
         i.print()
 
 
-def analyze_function(f, bit_vectors):
+def analyze_function(f, bit_vectors, failed_devs: FailedDevs):
     summary = 0.0
     fails = 0
-
     for bit_vector in bit_vectors:
         ssv = bit_vector_to_ssv(bit_vector)
         resp = f.apply_to_ssv(ssv)
+        failed_devs.recalc(resp.rejected_devices)
         if not resp.is_not_failed:
-            print({
-                'prob': ssv_probability(ssv, DEVS),
-                'devs': resp.rejected_devices
-            })
+            #print({
+            #    'prob': ssv_probability(ssv, DEVS),
+            #    'devs': resp.rejected_devices
+            #})
             summary = summary + ssv_probability(ssv, DEVS)
             fails = fails + 1
     print(summary)
@@ -101,20 +113,24 @@ def evaluate_all(loads, fns, device_graph):
     analyze_matrix(loads)
     dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
     iteret = 0
+    failed_devs = FailedDevs(is_modified=False)
+    failed_devs.zero()
     for f in fns:
         summary = 0
         print("f" + iteret.__str__())
         print("1-x error")
-        summary = summary + analyze_function(f, generate_vectors_multiple_error(dev_n, 1))
+        summary += analyze_function(f, generate_vectors_multiple_error(dev_n, 1), failed_devs)
         print("2-x error")
-        summary = summary + analyze_function(f, generate_vectors_multiple_error(dev_n, 2))
+        summary += analyze_function(f, generate_vectors_multiple_error(dev_n, 2), failed_devs)
         print("3-x error")
-        summary = summary + 2 * analyze_function(f, generate_vectors_multiple_error(dev_n, 3, 886))
+        summary += 2 * analyze_function(f, generate_vectors_multiple_error(dev_n, 3, 886), failed_devs)
         print("4-x error")
-        summary = summary + 10 * analyze_function(f, generate_vectors_multiple_error(dev_n, 4, 886))
+        summary += 10 * analyze_function(f, generate_vectors_multiple_error(dev_n, 4, 886), failed_devs)
         print(summary)
         print()
         iteret = iteret + 1
+    failed_devs.print()
+    failed_devs.zero()
 
 
 def bit_vector_to_ssv(bit_vector: List[bool]):
