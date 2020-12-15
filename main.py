@@ -1,6 +1,7 @@
 from typing import Dict, List
 from itertools import combinations
 from functools import reduce
+from collections import OrderedDict
 
 import graphviz
 import random
@@ -22,38 +23,23 @@ class Processor:
 
 
 class FailedDevs:
-    def __init__(self, is_modified: bool):
-        self.devs = {
-            'Pr1': 0,
-            'Pr2': 0,
-            'Pr3': 0,
-            'Pr4': 0,
-            'Pr5': 0,
-            'Pr6': 0,
-            'C1': 0,
-            'C2': 0,
-            'C5': 0,
-            'C6': 0,
-            'D1': 0,
-            'D2': 0,
-            'D3': 0,
-            'D7': 0,
-            'D8': 0,
-            'A1': 0,
-            'A2': 0,
-            'A3': 0,
-            'M1': 0,
-            'M2': 0,
-            'B1': 0,
-            'B2': 0,
-            'B3': 0,
-        }
-        if is_modified:
-            self.devs['B4'] = 0
+    def __init__(self, devices: Dict[str, Dict[int, SchemeElement]]):
+        self.devs = {}
+        tmp = {}
+        diction = devices
+        for dev_category in diction:
+            for dev_id in diction[dev_category]:
+                dev = diction[dev_category][dev_id]
+                tmp[dev.key + dev.i.__str__()] = 0
+            od = OrderedDict(sorted(tmp.items()))
+            self.devs.update(od)
+            tmp = {}
 
-    def recalc(self, failed_devs: List[SchemeElement]):
-        for dev in failed_devs:
-            self.devs[dev.key + dev.i.__str__()] += 1
+    def recalc(self, failed_devs: Dict[str, Dict[bool, List[bool]]]):
+        for dev_category in failed_devs:
+            for dev in failed_devs[dev_category]:
+                if not failed_devs[dev_category][dev]:
+                    self.devs[dev_category + dev.__str__()] += 1
 
     def zero(self):
         for dev in self.devs:
@@ -61,7 +47,7 @@ class FailedDevs:
 
     def print(self):
         for dev in self.devs:
-            print(dev + ": " + self.devs[dev].__str__() + ", ")
+            print(dev + ";" + self.devs[dev].__str__() + ";")
 
 
 def generate_vectors_multiple_error(blocks_number, error_count, length=0):
@@ -96,14 +82,14 @@ def analyze_function(f, bit_vectors, failed_devs: FailedDevs):
     for bit_vector in bit_vectors:
         ssv = bit_vector_to_ssv(bit_vector)
         resp = f.apply_to_ssv(ssv)
-        failed_devs.recalc(resp.rejected_devices)
+        failed_devs.recalc(ssv)
+        #print({
+        #    'prob': ssv_probability(ssv, DEVS),
+        #    'devs': resp.rejected_devices
+        #})
         if not resp.is_not_failed:
-            #print({
-            #    'prob': ssv_probability(ssv, DEVS),
-            #    'devs': resp.rejected_devices
-            #})
             summary = summary + ssv_probability(ssv, DEVS)
-            fails = fails + 1
+            fails += 1
     print(summary)
     print("failed " + fails.__str__())
     return summary
@@ -112,8 +98,9 @@ def analyze_function(f, bit_vectors, failed_devs: FailedDevs):
 def evaluate_all(loads, fns, device_graph):
     analyze_matrix(loads)
     dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
+    tmp_var = DEVS.values()
     iteret = 0
-    failed_devs = FailedDevs(is_modified=False)
+    failed_devs = FailedDevs(DEVS)
     failed_devs.zero()
     for f in fns:
         summary = 0
