@@ -61,7 +61,7 @@ def generate_vectors_multiple_error(blocks_number, error_count, length=0):
             p[i] = False
         vector.append(p)
     random.shuffle(vector)
-    if length == 0:
+    if length < 1:
         return vector
     return vector[:length]
 
@@ -102,7 +102,7 @@ def evaluate_all(loads, fns, device_graph):
     iteret = 0
     failed_devs = FailedDevs(DEVS)
     failed_devs.zero()
-    for f in fns:
+    """for f in fns:
         summary = 0
         print("f" + iteret.__str__())
         print("1-x error")
@@ -115,7 +115,20 @@ def evaluate_all(loads, fns, device_graph):
         summary += 10 * analyze_function(f, generate_vectors_multiple_error(dev_n, 4, 886), failed_devs)
         print(summary)
         print()
-        iteret = iteret + 1
+        iteret = iteret + 1"""
+
+    for fails, count in [[1, 0], [2, 0], [3, 886], [4, 886]]:
+        print(fails.__str__() + "-x error")
+        summary = 0
+        SSVs = generate_vectors_multiple_error(dev_n, fails, count)
+        for f in fns:
+            print("f" + iteret.__str__())
+            summary += analyze_function(f, SSVs, failed_devs)
+            iteret = iteret + 1
+        iteret = 0
+        print(summary)
+        print()
+
     failed_devs.print()
     failed_devs.zero()
 
