@@ -15,11 +15,7 @@ def read_system_csv(path):
         structure functions
     """
     with open(path) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=';')
-        data = []
-        for x in csv_reader:
-            data.append(x)
-        return data[:7], [x[0] for x in data[9:13]]
+        return list(csv.reader(csv_file, delimiter=';'))
 
 
 def path_join_current(path):

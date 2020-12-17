@@ -11,7 +11,7 @@ class DumpAble:
         pass
 
 
-def title(doc, data):
+def title(doc: Document, data):
     doc.add_paragraph("Міністерство освіти та науки, молоді та спорту України")
     doc.add_paragraph("Національний технічний університет України «КПІ»")
     doc.add_paragraph("Факультет прикладної математики")
@@ -40,11 +40,11 @@ def add_table_from_matrix(doc, matrix):
     table = doc.add_table(rows=rows_count, cols=cols_count)
 
 
+
 def input_task(doc, data):
     """1. Исходное задание;"""
     doc.add_paragraph("1. Початкове завдання")
     doc.add_picture(data['input'][DEVICE_SCHEME])
-    add_table_from_matrix(doc, data['input'][LOADS])
     doc.add_page_break()
 
 
@@ -57,7 +57,8 @@ def task_function_list(doc, data):
 
 def load_balancing(doc, data):
     """3. Таблица перераспределения нагрузки;"""
-    pass
+    doc.add_paragraph("3. Таблиця перерозподілу навантаження")
+    add_table_from_matrix(doc, data['input'][LOADS])
 
 
 def reject_modules_stats(doc, data):
@@ -103,7 +104,7 @@ def new_system_docs(doc, data):
     system_docs(doc, data)
 
 
-def document_do_all(doc, data, *funcs):
+def document_do_all(doc: Document, data, *funcs):
     for func in funcs:
         func(doc, data)
 

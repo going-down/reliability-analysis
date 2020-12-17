@@ -7,22 +7,20 @@ import graphviz
 import random
 
 from utils import read_system_csv, path_join_current
-from report import dump_report, LOADS, DEVICE_SCHEME, FNS
-from system import pr, a, b, c, d, m, DEVS, And, Or, SchemeElement
+from report import dump_report, LOADS, DEVICE_SCHEME, FNS, DumpAble
+from system import pr, a, b, c, d, m, DEVS, And, Or, SchemeElement, SSVApplierResponse, Pr, ApplierToSSV, S
 
 
-class Processor:
-    def __init__(self, name, t_n, t_max, replace_processors):
+class ProcessorLoadBalancer:
+    def __init__(self, i, name, t_n, t_max, replace_processors):
+        self.i = i
         self.name = name
         self.t_n = t_n
         self.t_max = t_max
         self.replace_processors = replace_processors
 
-    def print(self):
-        print(self.name + ": " + self.t_n + " " + self.t_max + " ", self.replace_processors)
 
-
-class FailedDevs:
+class FailedDevsStatistics:
     def __init__(self, devices: Dict[str, Dict[int, SchemeElement]]):
         self.devs = {}
         tmp = {}
@@ -66,27 +64,70 @@ def generate_vectors_multiple_error(blocks_number, error_count, length=0):
     return vector[:length]
 
 
-def analyze_matrix(matrix):
-    length = len(matrix)
-    processors = []
-    for i in range(2, length):
-        row = matrix[i]
-        processors.append(Processor(row[0], row[1], row[2], row[3:8]))
-    for i in processors:
-        i.print()
+def matrix_to_processor_load_balancers(matrix: List[List]) -> Dict[int, ProcessorLoadBalancer]:
+    return dict([(i, ProcessorLoadBalancer(i,
+                                           row[0],
+                                           row[1],
+                                           row[2],
+                                           dict((i, int(col)) for i, col in enumerate(row[3:], start=1))))
+                 for i, row in enumerate(matrix[2:], start=1)])
 
 
-def analyze_function(f, bit_vectors, failed_devs: FailedDevs):
+class LoadBalanceAble:
+    def balance_load(self,
+                     ssv,
+                     trivial_response: SSVApplierResponse,
+                     balance_scheme: Dict[int, ProcessorLoadBalancer]) -> SSVApplierResponse:
+        pass
+
+
+def enumerate_devs(devs):
+    return dict((dev.i, dev) for dev in devs)
+
+
+class TaskFunction(LoadBalanceAble, ApplierToSSV, DumpAble):
+    def __init__(self, expr: S):
+        self.expr = expr
+
+    def apply_to_ssv(self, system_state_vector: Dict[str, List[bool]]) -> SSVApplierResponse:
+        return self.expr.apply_to_ssv(system_state_vector)
+
+    def dump(self):
+        return self.expr.dump()
+
+    def balance_load(self,
+                     ssv,
+                     trivial_response: SSVApplierResponse,
+                     balancing_scheme: Dict[int, ProcessorLoadBalancer]) -> SSVApplierResponse:
+        if trivial_response.is_not_failed is True or \
+                not all(isinstance(dev, Pr) for dev in trivial_response.rejected_devices):
+            return trivial_response
+        else:
+            is_not_failed = trivial_response.is_not_failed
+            #rejected_devices = trivial_response.rejected_devices
+            #rejected_processors = enumerate_devs(filter(lambda x: isinstance(x, Pr),
+            #                                            trivial_response.rejected_devices))
+            rejected_processors = list(filter(lambda i: not ssv['Pr'][i], ssv['Pr']))
+            all_processors = DEVS['Pr']
+            all_processors_in_function = enumerate_devs(filter(lambda x: isinstance(x, Pr),
+                                                               self.expr.flatten()))
+            available_i_s = list(filter(lambda i: i not in rejected_processors, balancing_scheme))
+
+            balancing_scheme_for_failed = dict((i, dict((j, balancing_scheme[i].replace_processors[j])
+                                                        for j in available_i_s))
+                                               for i in rejected_processors)
+
+            return SSVApplierResponse(True, [])
+
+
+def analyze_function(f, bit_vectors, failed_devs: FailedDevsStatistics, balancing_scheme):
     summary = 0.0
     fails = 0
     for bit_vector in bit_vectors:
         ssv = bit_vector_to_ssv(bit_vector)
         resp = f.apply_to_ssv(ssv)
+        resp_with_balancing = f.balance_load(ssv, resp, balancing_scheme)
         failed_devs.recalc(ssv)
-        #print({
-        #    'prob': ssv_probability(ssv, DEVS),
-        #    'devs': resp.rejected_devices
-        #})
         if not resp.is_not_failed:
             summary = summary + ssv_probability(ssv, DEVS)
             fails += 1
@@ -96,12 +137,11 @@ def analyze_function(f, bit_vectors, failed_devs: FailedDevs):
 
 
 def evaluate_all(loads, fns, device_graph):
-    analyze_matrix(loads)
     dev_n = sum(len(typed_devs.values()) for typed_devs in DEVS.values())
     tmp_var = DEVS.values()
     iteret = 0
-    failed_devs = FailedDevs(DEVS)
-    failed_devs.zero()
+    fd_statistics = FailedDevsStatistics(DEVS)
+    fd_statistics.zero()
     """for f in fns:
         summary = 0
         print("f" + iteret.__str__())
@@ -117,20 +157,21 @@ def evaluate_all(loads, fns, device_graph):
         print()
         iteret = iteret + 1"""
 
+    balancing_scheme = matrix_to_processor_load_balancers(loads)
     for fails, count in [[1, 0], [2, 0], [3, 886], [4, 886]]:
         print(fails.__str__() + "-x error")
         summary = 0
         SSVs = generate_vectors_multiple_error(dev_n, fails, count)
         for f in fns:
             print("f" + iteret.__str__())
-            summary += analyze_function(f, SSVs, failed_devs)
+            summary += analyze_function(f, SSVs, fd_statistics, balancing_scheme)
             iteret = iteret + 1
         iteret = 0
         print(summary)
         print()
 
-    failed_devs.print()
-    failed_devs.zero()
+    fd_statistics.print()
+    fd_statistics.zero()
 
 
 def bit_vector_to_ssv(bit_vector: List[bool]):
@@ -180,40 +221,43 @@ def main(report_path):
         'C5': {'D7', 'D8'},
         'C6': {'D8'}
     }
-    loads, function_string = read_system_csv(path_join_current('loads.csv'))
+    loads = read_system_csv(path_join_current('loads.csv'))
     # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
     # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
     # f3=(D7vD8)xC5xB3x(Pr5vPr6vA2xM1xA1x(B1vB2)xPr2);;;;;;;;
     # f4=D8xC6xB3x(Pr5vPr6v(A2xM1vA3xM2)xA1x(B1vB2)xPr2);;;;;;;;
-    f1 = And(Or(d(1), d(2)),
-             Or(c(1), c(2)),
-             Or(b(1), b(2)),
-             Or(pr(1), pr(2), pr(4)))
-    f2 = And(Or(d(2), d(3)),
-             c(2),
-             Or(b(1), b(2)),
-             Or(pr(3), pr(4), a(1), m(2), a(3), b(3), pr(5)))
-    f3 = And(Or(d(7), d(8)),
-             c(5),
-             b(3),
-             Or(pr(5), pr(6),
-                And(a(2), m(1), a(1),
-                    Or(b(1), b(2)),
-                    pr(2))))
-    f4 = And(d(8), c(6), b(3),
-             Or(pr(5), pr(6),
-                And(Or(And(a(2), m(1)),
-                       And(a(3), m(2))),
-                    a(1),
-                    Or(b(1), b(2)),
-                    pr(2))))
+    f1 = TaskFunction(
+        And(Or(d(1), d(2)),
+            Or(c(1), c(2)),
+            Or(b(1), b(2)),
+            Or(pr(1), pr(2), pr(4))))
+    f2 = TaskFunction(
+        And(Or(d(2), d(3)),
+            c(2),
+            Or(b(1), b(2)),
+            Or(pr(3), pr(4), a(1), m(2), a(3), b(3), pr(5))))
+    f3 = TaskFunction(
+        And(Or(d(7), d(8)),
+            c(5),
+            b(3),
+            Or(pr(5), pr(6),
+               And(a(2), m(1), a(1),
+                   Or(b(1), b(2)),
+                   pr(2)))))
+    f4 = TaskFunction(
+        And(d(8), c(6), b(3),
+            Or(pr(5), pr(6),
+               And(Or(And(a(2), m(1)),
+                      And(a(3), m(2))),
+                   a(1),
+                   Or(b(1), b(2)),
+                   pr(2)))))
     dot = graphviz.Graph()
     for source, targets in device_graph.items():
         for target in targets:
             dot.edge(source, target)
-    #dot.render(path_join_current('graph.dot'))
+    # dot.render(path_join_current('graph.dot'))
 
-    #list_ = list(place_ones(23, 4))
     dump_report(
         data={
             FNS: [f1, f2, f3, f4],
@@ -226,10 +270,6 @@ def main(report_path):
             device_graph=device_graph),
         pathname=path_join_current(report_path),
         author=["", ""])
-    print(f1.dump())
-    print(f2.dump())
-    print(f3.dump())
-    print(f4.dump())
 
 
 REPORT_PATH = "report.docx"
