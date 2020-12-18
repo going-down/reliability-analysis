@@ -1,15 +1,15 @@
 from typing import Dict, List
-from itertools import combinations
 from functools import reduce
 from collections import OrderedDict
 
 import graphviz
 import random
+import itertools
+import more_itertools
 
 from utils import read_system_csv, path_join_current
 from report import dump_report, LOADS, DEVICE_SCHEME, FNS, DumpAble
 from system import pr, a, b, c, d, m, DEVS, And, Or, SchemeElement, SSVApplierResponse, Pr, ApplierToSSV, S
-
 
 class ProcessorLoadBalancer:
     def __init__(self, i, name, t_n, t_max, replace_processors):
@@ -53,7 +53,7 @@ def generate_vectors_multiple_error(blocks_number, error_count, length=0):
     Generates Vi vectors aka System State Vector
     """
     vector = []
-    for positions in combinations(range(blocks_number), error_count):
+    for positions in itertools.combinations(range(blocks_number), error_count):
         p = [True] * blocks_number
         for i in positions:
             p[i] = False
@@ -67,8 +67,8 @@ def generate_vectors_multiple_error(blocks_number, error_count, length=0):
 def matrix_to_processor_load_balancers(matrix: List[List]) -> Dict[int, ProcessorLoadBalancer]:
     return dict([(i, ProcessorLoadBalancer(i,
                                            row[0],
-                                           row[1],
-                                           row[2],
+                                           int(row[1]),
+                                           int(row[2]),
                                            dict((i, int(col)) for i, col in enumerate(row[3:], start=1))))
                  for i, row in enumerate(matrix[2:], start=1)])
 
@@ -117,7 +117,36 @@ class TaskFunction(LoadBalanceAble, ApplierToSSV, DumpAble):
                                                         for j in available_i_s))
                                                for i in rejected_processors)
 
-            return SSVApplierResponse(True, [])
+            all_possible_replacements = dict((i, list(more_itertools.powerset([x for x in row.keys()])))
+                                             for i, row in balancing_scheme_for_failed.items())
+
+            def filter_if_covers(i, combs):
+                return list(
+                    filter(lambda combination: balancing_scheme[i].t_n <= sum(balancing_scheme[i].replace_processors[r]
+                                                                              for r in combination),
+                           combs))
+
+            filtered_replacements = dict((i, filter_if_covers(i, combinations))
+                                         for i, combinations in all_possible_replacements.items())
+            filtered_replacements_keys = filtered_replacements.keys()
+            filtered_replacements_values = [filtered_replacements[i] for i in filtered_replacements_keys]
+
+            def is_fitting_configuration(conf):
+                t_s = dict()
+                for replacement_i_s, old_i in zip(conf, filtered_replacements_keys):
+                    for replacement_i in replacement_i_s:
+                        t_s[replacement_i] = t_s.get(replacement_i, 0) + \
+                                             balancing_scheme[old_i].replace_processors[replacement_i]
+                return all(t_s[i] <= balancing_scheme[i].t_max for i in t_s.keys())
+
+            try:
+                fitting_configuration = next(x for x in itertools.product(*filtered_replacements_values)
+                                             if is_fitting_configuration(x))
+                print("YIS")
+                return SSVApplierResponse(True, [])
+            except StopIteration:
+                print("Could not balance the load " + rejected_processors.__str__() + "  " + available_i_s.__str__())
+                return trivial_response
 
 
 def analyze_function(f, bit_vectors, failed_devs: FailedDevsStatistics, balancing_scheme):
@@ -170,7 +199,7 @@ def evaluate_all(loads, fns, device_graph):
         print(summary)
         print()
 
-    fd_statistics.print()
+    #fd_statistics.print()
     fd_statistics.zero()
 
 
@@ -230,7 +259,7 @@ def main(report_path):
         And(Or(d(1), d(2)),
             Or(c(1), c(2)),
             Or(b(1), b(2)),
-            Or(pr(1), pr(2), pr(4))))
+            pr(1)))
     f2 = TaskFunction(
         And(Or(d(2), d(3)),
             c(2),
