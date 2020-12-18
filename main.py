@@ -324,7 +324,9 @@ if __name__ == '__main__':
             And(Or(d(2), d(3)),
                 c(2),
                 Or(b(1), b(2)),
-                Or(pr(3), pr(4), a(1), m(2), a(3), b(3), pr(5)))),
+                Or(pr(3), pr(4), a(1), m(2), a(3),
+                   Or(b(3), b(4)),
+                   pr(5)))),
         TaskFunction(
             And(Or(d(7), d(8)),
                 c(5),
