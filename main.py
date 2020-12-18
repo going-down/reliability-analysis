@@ -6,6 +6,7 @@ import graphviz
 import random
 import itertools
 import more_itertools
+import math
 
 from utils import read_system_csv, path_join_current
 from report import dump_report, LOADS, DEVICE_SCHEME, FNS, DumpAble
@@ -60,9 +61,9 @@ def generate_vectors_multiple_error(blocks_number, error_count, length=0):
             p[i] = False
         vector.append(p)
     random.shuffle(vector)
-    if length < 1:
+    if length < 2:
         return vector
-    return vector[:length]
+    return vector[:math.floor(len(vector)/length) + 1]
 
 
 def matrix_to_processor_load_balancers(matrix: List[List]) -> Dict[int, ProcessorLoadBalancer]:
@@ -197,7 +198,7 @@ def evaluate_all(loads, fns, device_graph):
     for rejection_count, count, mult in [[1, 0, 1], [2, 0, 1], [3, 886, 2], [4, 886, 10]]:
         summary = 0
         summary_wb = 0
-        SSVs = generate_vectors_multiple_error(dev_n, rejection_count, count)
+        SSVs = generate_vectors_multiple_error(dev_n, rejection_count, mult)
         for i, f in enumerate(fns):
             p, summary_with_balanced, passes, fails, fixes, vectors_count =\
                 analyze_function(f, SSVs, fd_statistics, balancing_scheme)
