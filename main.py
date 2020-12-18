@@ -145,6 +145,7 @@ class TaskFunction(LoadBalanceAble, ApplierToSSV, DumpAble):
 
 def analyze_function(f, bit_vectors, failed_devs: FailedDevsStatistics, balancing_scheme):
     summary = 0.0
+    summary_with_balanced = 0.0
     fails = 0
     fixes = 0
     passes = 0
@@ -153,16 +154,19 @@ def analyze_function(f, bit_vectors, failed_devs: FailedDevsStatistics, balancin
         resp = f.apply_to_ssv(ssv)
         resp_with_balancing = f.balance_load(ssv, resp, balancing_scheme)
         failed_devs.recalc(ssv)
+        ssv_prob = ssv_probability(ssv, DEVS)
         if not resp.is_not_failed:
-            summary = summary + ssv_probability(ssv, DEVS)
+            summary = summary + ssv_prob
             fails += 1
             if resp_with_balancing.is_not_failed:
                 fixes += 1
+            else:
+                summary_with_balanced += ssv_prob
         else:
             passes += 1
     #print(summary)
     #print("failed " + fails.__str__())
-    return summary, passes, fails, fixes, len(bit_vectors)
+    return summary, summary_with_balanced, passes, fails, fixes, len(bit_vectors)
 
 
 def evaluate_all(loads, fns, device_graph):
@@ -187,18 +191,25 @@ def evaluate_all(loads, fns, device_graph):
         iteret = iteret + 1"""
 
     balancing_scheme = matrix_to_processor_load_balancers(loads)
-    print("vectors_count;rejection_count;fi;passes;fails;fixes;unrecoverable;q for fi")
+    print("Кількість векторів;Кратність вектора;fi;Кількість проходів;Кількість відмов;Кількість відновлень;Не відновлено;q без відновлень;q із відновленням")
     summary_summary = 0
+    summary_summary_wb = 0
     for rejection_count, count, mult in [[1, 0, 1], [2, 0, 1], [3, 886, 2], [4, 886, 10]]:
         summary = 0
+        summary_wb = 0
         SSVs = generate_vectors_multiple_error(dev_n, rejection_count, count)
         for i, f in enumerate(fns):
-            p, passes, fails, fixes, vectors_count = analyze_function(f, SSVs, fd_statistics, balancing_scheme)
-            print("%i;error %i;f%i;%i;%i;%i;%i;%e" % (vectors_count, rejection_count, i, passes, fails, fixes, (fails - fixes), p))
+            p, summary_with_balanced, passes, fails, fixes, vectors_count =\
+                analyze_function(f, SSVs, fd_statistics, balancing_scheme)
+            print("%i;error %i;f%i;%i;%i;%i;%i;%e;%e" %
+                  (vectors_count, rejection_count, i, passes, fails, fixes, (fails - fixes), p, summary_with_balanced))
             summary += p
+            summary_wb += summary_with_balanced
         summary_summary += summary*mult
+        summary_summary_wb += summary_wb*mult
     print()
     print("Summary Q=", summary_summary)
+    print("Summary Q with balance=", summary_summary_wb)
     print()
     # print(summary)
     # print()
