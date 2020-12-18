@@ -242,7 +242,7 @@ def ssv_probability(ssv, devs):
     return reduce((lambda p1, p2: p1 * p2), ssv_device_probabilities(ssv, devs))
 
 
-def main(report_path):
+def main(report_path, functions):
     device_graph = {
         'B1': {'Pr1', 'Pr2', 'Pr3', 'Pr4', 'A1', 'C1', 'C2'},
         'B2': {'Pr1', 'Pr2', 'Pr3', 'Pr4', 'A1', 'C1', 'C2'},
@@ -255,36 +255,6 @@ def main(report_path):
         'C6': {'D8'}
     }
     loads = read_system_csv(path_join_current('loads.csv'))
-    # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
-    # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
-    # f3=(D7vD8)xC5xB3x(Pr5vPr6vA2xM1xA1x(B1vB2)xPr2);;;;;;;;
-    # f4=D8xC6xB3x(Pr5vPr6v(A2xM1vA3xM2)xA1x(B1vB2)xPr2);;;;;;;;
-    f1 = TaskFunction(
-        And(Or(d(1), d(2)),
-            Or(c(1), c(2)),
-            Or(b(1), b(2)),
-            pr(1)))
-    f2 = TaskFunction(
-        And(Or(d(2), d(3)),
-            c(2),
-            Or(b(1), b(2)),
-            Or(pr(3), pr(4), a(1), m(2), a(3), b(3), pr(5))))
-    f3 = TaskFunction(
-        And(Or(d(7), d(8)),
-            c(5),
-            b(3),
-            Or(pr(5), pr(6),
-               And(a(2), m(1), a(1),
-                   Or(b(1), b(2)),
-                   pr(2)))))
-    f4 = TaskFunction(
-        And(d(8), c(6), b(3),
-            Or(pr(5), pr(6),
-               And(Or(And(a(2), m(1)),
-                      And(a(3), m(2))),
-                   a(1),
-                   Or(b(1), b(2)),
-                   pr(2)))))
     dot = graphviz.Graph()
     for source, targets in device_graph.items():
         for target in targets:
@@ -293,13 +263,13 @@ def main(report_path):
 
     dump_report(
         data={
-            FNS: [f1, f2, f3, f4],
+            FNS: functions,
             LOADS: loads,
             DEVICE_SCHEME: path_join_current('scheme.jpg')
         },
         output=evaluate_all(
             loads=loads,
-            fns=[f1, f2, f3, f4],
+            fns=functions,
             device_graph=device_graph),
         pathname=path_join_current(report_path),
         author=["", ""])
@@ -307,4 +277,70 @@ def main(report_path):
 
 REPORT_PATH = "report.docx"
 if __name__ == '__main__':
-    main(REPORT_PATH)
+    fs_initial = [
+        # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
+        # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
+        # f3=(D7vD8)xC5xB3x(Pr5vPr6vA2xM1xA1x(B1vB2)xPr2);;;;;;;;
+        # f4=D8xC6xB3x(Pr5vPr6v(A2xM1vA3xM2)xA1x(B1vB2)xPr2);;;;;;;;
+        TaskFunction(
+            And(Or(d(1), d(2)),
+                Or(c(1), c(2)),
+                Or(b(1), b(2)),
+                pr(1))),
+        TaskFunction(
+            And(Or(d(2), d(3)),
+                c(2),
+                Or(b(1), b(2)),
+                Or(pr(3), pr(4), a(1), m(2), a(3), b(3), pr(5)))),
+        TaskFunction(
+            And(Or(d(7), d(8)),
+                c(5),
+                b(3),
+                Or(pr(5), pr(6),
+                   And(a(2), m(1), a(1),
+                       Or(b(1), b(2)),
+                       pr(2))))),
+        TaskFunction(
+            And(d(8), c(6), b(3),
+                Or(pr(5), pr(6),
+                   And(Or(And(a(2), m(1)),
+                          And(a(3), m(2))),
+                       a(1),
+                       Or(b(1), b(2)),
+                       pr(2)))))
+    ]
+    main("report.docx", fs_initial)
+    fs_modified = [
+        # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
+        # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
+        # f3=(D7vD8)xC5xB3x(Pr5vPr6vA2xM1xA1x(B1vB2)xPr2);;;;;;;;
+        # f4=D8xC6xB3x(Pr5vPr6v(A2xM1vA3xM2)xA1x(B1vB2)xPr2);;;;;;;;
+        TaskFunction(
+            And(Or(d(1), d(2)),
+                Or(c(1), c(2)),
+                Or(b(1), b(2)),
+                pr(1))),
+        TaskFunction(
+            And(Or(d(2), d(3)),
+                c(2),
+                Or(b(1), b(2)),
+                Or(pr(3), pr(4), a(1), m(2), a(3), b(3), pr(5)))),
+        TaskFunction(
+            And(Or(d(7), d(8)),
+                c(5),
+                Or(b(3), b(4)),
+                Or(pr(5), pr(6),
+                   And(a(2), m(1), a(1),
+                       Or(b(1), b(2)),
+                       pr(2))))),
+        TaskFunction(
+            And(d(8), c(6),
+                Or(b(3), b(4)),
+                Or(pr(5), pr(6),
+                   And(Or(And(a(2), m(1)),
+                          And(a(3), m(2))),
+                       a(1),
+                       Or(b(1), b(2)),
+                       pr(2)))))
+    ]
+    main("report1.docx", fs_modified)
