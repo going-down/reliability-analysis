@@ -11,6 +11,7 @@ from utils import read_system_csv, path_join_current
 from report import dump_report, LOADS, DEVICE_SCHEME, FNS, DumpAble
 from system import pr, a, b, c, d, m, DEVS, And, Or, SchemeElement, SSVApplierResponse, Pr, ApplierToSSV, S
 
+
 class ProcessorLoadBalancer:
     def __init__(self, i, name, t_n, t_max, replace_processors):
         self.i = i
