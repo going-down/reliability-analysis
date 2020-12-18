@@ -254,7 +254,7 @@ def ssv_probability(ssv, devs):
     return reduce((lambda p1, p2: p1 * p2), ssv_device_probabilities(ssv, devs))
 
 
-def main(report_path, functions):
+def main_on_function(report_path, functions):
     device_graph = {
         'B1': {'Pr1', 'Pr2', 'Pr3', 'Pr4', 'A1', 'C1', 'C2'},
         'B2': {'Pr1', 'Pr2', 'Pr3', 'Pr4', 'A1', 'C1', 'C2'},
@@ -287,8 +287,7 @@ def main(report_path, functions):
         author=["", ""])
 
 
-REPORT_PATH = "report.docx"
-if __name__ == '__main__':
+def main():
     fs_initial = [
         # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
         # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
@@ -321,7 +320,7 @@ if __name__ == '__main__':
                        Or(b(1), b(2)),
                        pr(2)))))
     ]
-    main("report.docx", fs_initial)
+    main_on_function("report.docx", fs_initial)
     fs_modified = [
         # f1=(D1vD2)x(C1vC2)x(B1vB2)x(Pr1vPr2vPr4);;;;;;;;
         # f2=(D2vD3)xC2x(B1vB2)x(Pr3vPr4vA1xM2xA3xB3xPr5);;;;;;;;
@@ -357,4 +356,9 @@ if __name__ == '__main__':
                        Or(b(1), b(2)),
                        pr(2)))))
     ]
-    main("report1.docx", fs_modified)
+    main_on_function("report1.docx", fs_modified)
+
+
+REPORT_PATH = "report.docx"
+if __name__ == '__main__':
+    main()

@@ -4,5 +4,5 @@ import os
 
 
 def test_main():
-    main(REPORT_PATH)
+    main()
     assert os.path.exists(path_join_current(REPORT_PATH))
