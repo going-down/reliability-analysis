@@ -162,7 +162,7 @@ def analyze_function(f, bit_vectors, failed_devs: FailedDevsStatistics, balancin
             passes += 1
     #print(summary)
     #print("failed " + fails.__str__())
-    return summary, passes, fails, fixes
+    return summary, passes, fails, fixes, len(bit_vectors)
 
 
 def evaluate_all(loads, fns, device_graph):
@@ -187,13 +187,13 @@ def evaluate_all(loads, fns, device_graph):
         iteret = iteret + 1"""
 
     balancing_scheme = matrix_to_processor_load_balancers(loads)
-    print("rejection_count;fi;passes;fails;fixes;unrecoverable;pure p;p with")
+    print("vectors_count;rejection_count;fi;passes;fails;fixes;unrecoverable;p for fi")
     for rejection_count, count in [[1, 0], [2, 0], [3, 886], [4, 886]]:
         summary = 0
         SSVs = generate_vectors_multiple_error(dev_n, rejection_count, count)
         for i, f in enumerate(fns):
-            p, passes, fails, fixes = analyze_function(f, SSVs, fd_statistics, balancing_scheme)
-            print("error %i;f%i;%i;%i;%i;%i" % (rejection_count, i, passes, fails, fixes, (fails - fixes)))
+            p, passes, fails, fixes, vectors_count = analyze_function(f, SSVs, fd_statistics, balancing_scheme)
+            print("%i;error %i;f%i;%i;%i;%i;%i;%e" % (vectors_count, rejection_count, i, passes, fails, fixes, (fails - fixes), p))
             summary += p
         #print(summary)
         #print()
