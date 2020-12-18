@@ -1,0 +1,17 @@
+rejection_count;fi;passes;fails;fixes;unrecoverable
+error 1;f0;22;1;1;0
+error 1;f1;22;1;0;1
+error 1;f2;21;2;0;2
+error 1;f3;20;3;0;3
+error 2;f0;228;25;16;9
+error 2;f1;229;24;0;24
+error 2;f2;209;44;0;44
+error 2;f3;190;63;0;63
+error 3;f0;747;139;52;87
+error 3;f1;745;141;0;141
+error 3;f2;660;226;0;226
+error 3;f3;578;308;0;308
+error 4;f0;676;210;61;149
+error 4;f1;684;202;0;202
+error 4;f2;559;327;0;327
+error 4;f3;459;427;0;427

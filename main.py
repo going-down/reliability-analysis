@@ -104,14 +104,7 @@ class TaskFunction(LoadBalanceAble, ApplierToSSV, DumpAble):
                 not all(isinstance(dev, Pr) for dev in trivial_response.rejected_devices):
             return trivial_response
         else:
-            is_not_failed = trivial_response.is_not_failed
-            #rejected_devices = trivial_response.rejected_devices
-            #rejected_processors = enumerate_devs(filter(lambda x: isinstance(x, Pr),
-            #                                            trivial_response.rejected_devices))
             rejected_processors = list(filter(lambda i: not ssv['Pr'][i], ssv['Pr']))
-            all_processors = DEVS['Pr']
-            all_processors_in_function = enumerate_devs(filter(lambda x: isinstance(x, Pr),
-                                                               self.expr.flatten()))
             available_i_s = list(filter(lambda i: i not in rejected_processors, balancing_scheme))
 
             balancing_scheme_for_failed = dict((i, dict((j, balancing_scheme[i].replace_processors[j])
@@ -143,16 +136,18 @@ class TaskFunction(LoadBalanceAble, ApplierToSSV, DumpAble):
             try:
                 fitting_configuration = next(x for x in itertools.product(*filtered_replacements_values)
                                              if is_fitting_configuration(x))
-                print("YIS")
+                #print("YIS")
                 return SSVApplierResponse(True, [])
             except StopIteration:
-                print("Could not balance the load " + rejected_processors.__str__() + "  " + available_i_s.__str__())
+                #print("Could not balance the load " + rejected_processors.__str__() + "  " + available_i_s.__str__())
                 return trivial_response
 
 
 def analyze_function(f, bit_vectors, failed_devs: FailedDevsStatistics, balancing_scheme):
     summary = 0.0
     fails = 0
+    fixes = 0
+    passes = 0
     for bit_vector in bit_vectors:
         ssv = bit_vector_to_ssv(bit_vector)
         resp = f.apply_to_ssv(ssv)
@@ -161,9 +156,13 @@ def analyze_function(f, bit_vectors, failed_devs: FailedDevsStatistics, balancin
         if not resp.is_not_failed:
             summary = summary + ssv_probability(ssv, DEVS)
             fails += 1
-    print(summary)
-    print("failed " + fails.__str__())
-    return summary
+            if resp_with_balancing.is_not_failed:
+                fixes += 1
+        else:
+            passes += 1
+    #print(summary)
+    #print("failed " + fails.__str__())
+    return summary, passes, fails, fixes
 
 
 def evaluate_all(loads, fns, device_graph):
@@ -188,17 +187,16 @@ def evaluate_all(loads, fns, device_graph):
         iteret = iteret + 1"""
 
     balancing_scheme = matrix_to_processor_load_balancers(loads)
-    for fails, count in [[1, 0], [2, 0], [3, 886], [4, 886]]:
-        print(fails.__str__() + "-x error")
+    print("rejection_count;fi;passes;fails;fixes;unrecoverable;pure p;p with")
+    for rejection_count, count in [[1, 0], [2, 0], [3, 886], [4, 886]]:
         summary = 0
-        SSVs = generate_vectors_multiple_error(dev_n, fails, count)
-        for f in fns:
-            print("f" + iteret.__str__())
-            summary += analyze_function(f, SSVs, fd_statistics, balancing_scheme)
-            iteret = iteret + 1
-        iteret = 0
-        print(summary)
-        print()
+        SSVs = generate_vectors_multiple_error(dev_n, rejection_count, count)
+        for i, f in enumerate(fns):
+            p, passes, fails, fixes = analyze_function(f, SSVs, fd_statistics, balancing_scheme)
+            print("error %i;f%i;%i;%i;%i;%i" % (rejection_count, i, passes, fails, fixes, (fails - fixes)))
+            summary += p
+        #print(summary)
+        #print()
 
     #fd_statistics.print()
     fd_statistics.zero()
