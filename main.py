@@ -187,18 +187,23 @@ def evaluate_all(loads, fns, device_graph):
         iteret = iteret + 1"""
 
     balancing_scheme = matrix_to_processor_load_balancers(loads)
-    print("vectors_count;rejection_count;fi;passes;fails;fixes;unrecoverable;p for fi")
-    for rejection_count, count in [[1, 0], [2, 0], [3, 886], [4, 886]]:
+    print("vectors_count;rejection_count;fi;passes;fails;fixes;unrecoverable;q for fi")
+    summary_summary = 0
+    for rejection_count, count, mult in [[1, 0, 1], [2, 0, 1], [3, 886, 2], [4, 886, 10]]:
         summary = 0
         SSVs = generate_vectors_multiple_error(dev_n, rejection_count, count)
         for i, f in enumerate(fns):
             p, passes, fails, fixes, vectors_count = analyze_function(f, SSVs, fd_statistics, balancing_scheme)
             print("%i;error %i;f%i;%i;%i;%i;%i;%e" % (vectors_count, rejection_count, i, passes, fails, fixes, (fails - fixes), p))
             summary += p
-        #print(summary)
-        #print()
+        summary_summary += summary*mult
+    print()
+    print("Summary Q=", summary_summary)
+    print()
+    # print(summary)
+    # print()
 
-    #fd_statistics.print()
+    fd_statistics.print()
     fd_statistics.zero()
 
 

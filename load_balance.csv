@@ -1,4 +1,4 @@
-vectors_count;rejection_count;fi;passes;fails;fixes;unrecoverable;p for fi
+vectors_count;rejection_count;fi;passes;fails;fixes;unrecoverable;q for fi
 23;error 1;f0;22;1;1;0;1.294108e-04
 23;error 1;f1;22;1;0;1;1.692363e-04
 23;error 1;f2;21;2;0;2;1.931250e-04
@@ -7,11 +7,11 @@ vectors_count;rejection_count;fi;passes;fails;fixes;unrecoverable;p for fi
 253;error 2;f1;229;24;0;24;9.384282e-07
 253;error 2;f2;209;44;0;44;1.044861e-06
 253;error 2;f3;190;63;0;63;2.566752e-06
-886;error 3;f0;755;131;52;79;7.833500e-10
-886;error 3;f1;749;137;0;137;1.166882e-09
-886;error 3;f2;638;248;0;248;1.367518e-09
-886;error 3;f3;558;328;0;328;2.516014e-09
-886;error 4;f0;700;186;45;141;2.823555e-13
-886;error 4;f1;695;191;0;191;2.886891e-13
-886;error 4;f2;570;316;0;316;3.432054e-13
-886;error 4;f3;477;409;0;409;5.868603e-13
+886;error 3;f0;741;145;65;80;1.125991e-09
+886;error 3;f1;753;133;0;133;1.122022e-09
+886;error 3;f2;651;235;0;235;1.156531e-09
+886;error 3;f3;577;309;0;309;2.151532e-09
+886;error 4;f0;693;193;54;139;2.656420e-13
+886;error 4;f1;696;190;0;190;2.833390e-13
+886;error 4;f2;568;318;0;318;2.969884e-13
+886;error 4;f3;498;388;0;388;5.477500e-13
